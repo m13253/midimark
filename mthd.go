@@ -27,6 +27,7 @@ package midimark
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -62,6 +63,47 @@ func (mthd *MThd) Encode(w io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func (mthd *MThd) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	start = xml.StartElement{
+		Name: xml.Name{Local: "MThd"},
+		Attr: []xml.Attr{
+			xml.Attr{
+				Name:  xml.Name{Local: "pos"},
+				Value: fmt.Sprintf("%#x", mthd.FilePosition),
+			},
+			xml.Attr{
+				Name:  xml.Name{Local: "format"},
+				Value: fmt.Sprintf("%d", mthd.Format),
+			},
+			xml.Attr{
+				Name:  xml.Name{Local: "ntrks"},
+				Value: fmt.Sprintf("%d", mthd.NTrks),
+			},
+			xml.Attr{
+				Name:  xml.Name{Local: "division"},
+				Value: fmt.Sprintf("%d", mthd.Division),
+			},
+		},
+	}
+	if len(mthd.Undecoded) != 0 {
+		start.Attr = append(start.Attr, xml.Attr{
+			Name:  xml.Name{Local: "undecoded"},
+			Value: fmt.Sprintf("%#x", mthd.Undecoded),
+		})
+	}
+	err := e.EncodeToken(start)
+	if err != nil {
+		return err
+	}
+	for _, mtrk := range mthd.Tracks {
+		err = e.Encode(mtrk)
+		if err != nil {
+			return err
+		}
+	}
+	return e.EncodeToken(start.End())
 }
 
 func DecodeMThd(r io.ReadSeeker, warningCallback WarningCallback) (mthd *MThd, err error) {

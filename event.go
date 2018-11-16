@@ -45,11 +45,11 @@ func (ev *EventNoteOff) Encode(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	if *status == ev.Status() {
-		_, err = w.Write([]byte{ev.Key, ev.Velocity})
+		_, err = w.Write([]byte{uint8(ev.Key), ev.Velocity})
 	} else {
 		*status = ev.Status()
 		*channel = ev.Channel
-		_, err = w.Write([]byte{ev.Status(), ev.Key, ev.Velocity})
+		_, err = w.Write([]byte{ev.Status(), uint8(ev.Key), ev.Velocity})
 	}
 	return err
 }
@@ -97,11 +97,11 @@ func (ev *EventNoteOn) Encode(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	if *status == ev.Status() {
-		_, err = w.Write([]byte{ev.Key, ev.Velocity})
+		_, err = w.Write([]byte{uint8(ev.Key), ev.Velocity})
 	} else {
 		*status = ev.Status()
 		*channel = ev.Channel
-		_, err = w.Write([]byte{ev.Status(), ev.Key, ev.Velocity})
+		_, err = w.Write([]byte{ev.Status(), uint8(ev.Key), ev.Velocity})
 	}
 	return err
 }
@@ -149,11 +149,11 @@ func (ev *EventPolyphonicKeyPressure) Encode(w io.Writer, status, channel *uint8
 		return err
 	}
 	if *status == ev.Status() {
-		_, err = w.Write([]byte{ev.Key, ev.Velocity})
+		_, err = w.Write([]byte{uint8(ev.Key), ev.Velocity})
 	} else {
 		*status = ev.Status()
 		*channel = ev.Channel
-		_, err = w.Write([]byte{ev.Status(), ev.Key, ev.Velocity})
+		_, err = w.Write([]byte{ev.Status(), uint8(ev.Key), ev.Velocity})
 	}
 	return err
 }
@@ -1015,7 +1015,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 		}
 		event = &EventNoteOff{
 			EventCommon: eventCommon,
-			Key:         buf[1] & 0x7f,
+			Key:         Key(buf[1] & 0x7f),
 			Velocity:    buf[2] & 0x7f,
 		}
 	case 0x90:
@@ -1031,7 +1031,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 		}
 		event = &EventNoteOn{
 			EventCommon: eventCommon,
-			Key:         buf[1] & 0x7f,
+			Key:         Key(buf[1] & 0x7f),
 			Velocity:    buf[2] & 0x7f,
 		}
 	case 0xa0:
@@ -1047,7 +1047,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 		}
 		event = &EventPolyphonicKeyPressure{
 			EventCommon: eventCommon,
-			Key:         buf[1] & 0x7f,
+			Key:         Key(buf[1] & 0x7f),
 			Velocity:    buf[2] & 0x7f,
 		}
 	case 0xb0:

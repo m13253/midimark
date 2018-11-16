@@ -66,7 +66,7 @@ type EventCommon struct {
 // 8n
 type EventNoteOff struct {
 	EventCommon
-	Key           uint8
+	Key           Key
 	Velocity      uint8
 	RelatedNoteOn Event
 }
@@ -74,7 +74,7 @@ type EventNoteOff struct {
 // 9n
 type EventNoteOn struct {
 	EventCommon
-	Key            uint8
+	Key            Key
 	Velocity       uint8
 	RelatedNoteOn  Event
 	RelatedNoteOff Event
@@ -83,7 +83,7 @@ type EventNoteOn struct {
 // An
 type EventPolyphonicKeyPressure struct {
 	EventCommon
-	Key           uint8
+	Key           Key
 	Velocity      uint8
 	RelatedNoteOn Event
 }
@@ -302,42 +302,6 @@ type EventUnknown struct {
 	EventCommon
 	RawData []byte
 }
-
-type KeySignature int16
-
-const (
-	KeyCbMaj KeySignature = -0x700
-	KeyGbMaj              = -0x600
-	KeyDbMaj              = -0x500
-	KeyAbMaj              = -0x400
-	KeyEbMaj              = -0x300
-	KeyBbMaj              = -0x200
-	KeyFMaj               = -0x100
-	KeyCMaj               = 0x0000
-	KeyGMaj               = 0x0100
-	KeyDMaj               = 0x0200
-	KeyAMaj               = 0x0300
-	KeyEMaj               = 0x0400
-	KeyBMaj               = 0x0500
-	KeyFsMaj              = 0x0600
-	KeyCsMaj              = 0x0700
-
-	KeyAbMin KeySignature = -0x6ff
-	KeyEbMin              = -0x5ff
-	KeyBbMin              = -0x4ff
-	KeyFMin               = -0x3ff
-	KeyCMin               = -0x2ff
-	KeyGMin               = -0x1ff
-	KeyDMin               = -0x0ff
-	KeyAMin               = 0x0001
-	KeyEMin               = 0x0101
-	KeyBMin               = 0x0201
-	KeyFsMin              = 0x0301
-	KeyCsMin              = 0x0401
-	KeyGsMin              = 0x0501
-	KeyDsMin              = 0x0601
-	KeyAsMin              = 0x0701
-)
 
 func (ev *EventCommon) Common() *EventCommon {
 	return ev
