@@ -745,7 +745,7 @@ func decodeMetaEvent(raw *MetaEventUnknown, warningCallback WarningCallback) Eve
 
 func encodeMetaEvent(ev MetaEvent, w io.Writer, status, channel *uint8) error {
 	evCommon := ev.Common()
-	err := evCommon.DeltaTime.Encode(w)
+	err := evCommon.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -779,7 +779,7 @@ func encodeMetaEvent(ev MetaEvent, w io.Writer, status, channel *uint8) error {
 
 func encodeMetaEventLen(ev MetaEvent, status, channel *uint8) (int64, error) {
 	evCommon := ev.Common()
-	length, err := evCommon.DeltaTime.EncodeLen()
+	length, err := evCommon.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}

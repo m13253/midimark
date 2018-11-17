@@ -112,7 +112,7 @@ func DecodeVLQ(r io.ReadSeeker, warningCallback WarningCallback) (VLQ, error) {
 		return (VLQ(buf[0]&0x7f) << 21) | (VLQ(buf[1]&0x7f) << 14) | (VLQ(buf[2]&0x7f) << 7) | VLQ(buf[3]), nil
 	}
 
-	warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid VLQ encoding %#01x", buf)))
+	warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid VLQ encoding % x", buf)))
 	// We might be decoding something other than VLQ, try to resync
 	_, err = r.Seek(-4, io.SeekCurrent)
 	if err != nil {

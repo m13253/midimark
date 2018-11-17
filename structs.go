@@ -58,8 +58,8 @@ type MTrk struct {
 
 type EventCommon struct {
 	FilePosition int64
-	AbsTime      uint64
-	DeltaTime    VLQ
+	AbsTick      uint64
+	DeltaTick    VLQ
 	Channel      uint8
 }
 

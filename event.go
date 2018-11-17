@@ -40,7 +40,7 @@ func (ev *EventNoteOff) Encode(w io.Writer, status, channel *uint8) error {
 	if ev.Velocity >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (ev *EventNoteOff) EncodeLen(status, channel *uint8) (int64, error) {
 	if ev.Velocity >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -92,7 +92,7 @@ func (ev *EventNoteOn) Encode(w io.Writer, status, channel *uint8) error {
 	if ev.Velocity >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (ev *EventNoteOn) EncodeLen(status, channel *uint8) (int64, error) {
 	if ev.Velocity >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -144,7 +144,7 @@ func (ev *EventPolyphonicKeyPressure) Encode(w io.Writer, status, channel *uint8
 	if ev.Velocity >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (ev *EventPolyphonicKeyPressure) EncodeLen(status, channel *uint8) (int64, 
 	if ev.Velocity >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -196,7 +196,7 @@ func (ev *EventControlChange) Encode(w io.Writer, status, channel *uint8) error 
 	if ev.Value >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid control value %d", ev.Value))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (ev *EventControlChange) EncodeLen(status, channel *uint8) (int64, error) {
 	if ev.Value >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid control value %d", ev.Value))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -242,19 +242,19 @@ func (ev *EventProgramChange) Encode(w io.Writer, status, channel *uint8) error 
 	if ev.Channel >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
-	if ev.Program >= 0x80 {
+	if ev.Program-1 >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid program value %d", ev.Program))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
 	if *status == ev.Status() {
-		_, err = w.Write([]byte{ev.Program})
+		_, err = w.Write([]byte{ev.Program - 1})
 	} else {
 		*status = ev.Status()
 		*channel = ev.Channel
-		_, err = w.Write([]byte{ev.Status(), ev.Program})
+		_, err = w.Write([]byte{ev.Status(), ev.Program - 1})
 	}
 	return err
 }
@@ -266,7 +266,7 @@ func (ev *EventProgramChange) EncodeLen(status, channel *uint8) (int64, error) {
 	if ev.Program >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid program value %d", ev.Program))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -291,7 +291,7 @@ func (ev *EventChannelPressure) Encode(w io.Writer, status, channel *uint8) erro
 	if ev.Velocity >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -312,7 +312,7 @@ func (ev *EventChannelPressure) EncodeLen(status, channel *uint8) (int64, error)
 	if ev.Velocity >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -337,7 +337,7 @@ func (ev *EventPitchWheelChange) Encode(w io.Writer, status, channel *uint8) err
 	if ev.Pitch >= 0x2000 || ev.Pitch < -0x2000 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid pitch value %d", ev.Pitch))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func (ev *EventPitchWheelChange) EncodeLen(status, channel *uint8) (int64, error
 	if ev.Pitch >= 0x2000 || ev.Pitch < -0x2000 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid pitch value %d", ev.Pitch))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -377,7 +377,7 @@ func (ev *EventPitchWheelChange) Status() uint8 {
 }
 
 func (ev *EventSystemExclusive) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -402,6 +402,9 @@ func (ev *EventSystemExclusive) Encode(w io.Writer, status, channel *uint8) erro
 		return err
 	}
 	_, err = w.Write(ev.Data[:packetLen])
+	if err != nil {
+		return err
+	}
 	for i := MaxVLQ; i < len(ev.Data); i += MaxVLQ {
 		*status = 0xf7
 		_, err = w.Write([]byte{0x00, 0xf7})
@@ -417,12 +420,15 @@ func (ev *EventSystemExclusive) Encode(w io.Writer, status, channel *uint8) erro
 			return err
 		}
 		_, err = w.Write(ev.Data[i : i+packetLen])
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (ev *EventSystemExclusive) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -470,7 +476,7 @@ func (ev *EventTimeCodeQuarterFrame) Encode(w io.Writer, status, channel *uint8)
 	if ev.Values >= 0x10 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid time code quarter frame value %d", ev.Values))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -493,7 +499,7 @@ func (ev *EventTimeCodeQuarterFrame) EncodeLen(status, channel *uint8) (int64, e
 	if ev.Values >= 0x10 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid time code quarter frame value %d", ev.Values))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -514,7 +520,7 @@ func (ev *EventSongPositionPointer) Encode(w io.Writer, status, channel *uint8) 
 	if ev.SongPosition >= 0x4000 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid song position %d", ev.SongPosition))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -534,7 +540,7 @@ func (ev *EventSongPositionPointer) EncodeLen(status, channel *uint8) (int64, er
 	if ev.SongPosition >= 0x4000 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid song position %d", ev.SongPosition))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -548,14 +554,14 @@ func (ev *EventSongPositionPointer) EncodeLen(status, channel *uint8) (int64, er
 }
 
 func (ev *EventSongPositionPointer) Status() uint8 {
-	return ev.Status()
+	return 0xf2
 }
 
 func (ev *EventSongSelect) Encode(w io.Writer, status, channel *uint8) error {
 	if ev.SongNumber >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid song number %d", ev.SongNumber))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -575,7 +581,7 @@ func (ev *EventSongSelect) EncodeLen(status, channel *uint8) (int64, error) {
 	if ev.SongNumber >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid song number %d", ev.SongNumber))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -593,7 +599,7 @@ func (ev *EventSongSelect) Status() uint8 {
 }
 
 func (ev *EventTuneRequest) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -610,7 +616,7 @@ func (ev *EventTuneRequest) Encode(w io.Writer, status, channel *uint8) error {
 }
 
 func (ev *EventTuneRequest) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -628,7 +634,7 @@ func (ev *EventTuneRequest) Status() uint8 {
 }
 
 func (ev *EventEscape) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -653,6 +659,9 @@ func (ev *EventEscape) Encode(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	_, err = w.Write(ev.Data[:packetLen])
+	if err != nil {
+		return err
+	}
 	for i := MaxVLQ; i < len(ev.Data); i += MaxVLQ {
 		_, err = w.Write([]byte{0x00, 0xf7})
 		if err != nil {
@@ -667,12 +676,15 @@ func (ev *EventEscape) Encode(w io.Writer, status, channel *uint8) error {
 			return err
 		}
 		_, err = w.Write(ev.Data[i : i+packetLen])
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (ev *EventEscape) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -713,7 +725,7 @@ func (ev *EventEscape) Status() uint8 {
 }
 
 func (ev *EventTimingClock) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -730,7 +742,7 @@ func (ev *EventTimingClock) Encode(w io.Writer, status, channel *uint8) error {
 }
 
 func (ev *EventTimingClock) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -748,7 +760,7 @@ func (ev *EventTimingClock) Status() uint8 {
 }
 
 func (ev *EventStart) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -765,7 +777,7 @@ func (ev *EventStart) Encode(w io.Writer, status, channel *uint8) error {
 }
 
 func (ev *EventStart) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -783,7 +795,7 @@ func (ev *EventStart) Status() uint8 {
 }
 
 func (ev *EventContinue) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -800,7 +812,7 @@ func (ev *EventContinue) Encode(w io.Writer, status, channel *uint8) error {
 }
 
 func (ev *EventContinue) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -818,7 +830,7 @@ func (ev *EventContinue) Status() uint8 {
 }
 
 func (ev *EventStop) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -835,7 +847,7 @@ func (ev *EventStop) Encode(w io.Writer, status, channel *uint8) error {
 }
 
 func (ev *EventStop) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -853,7 +865,7 @@ func (ev *EventStop) Status() uint8 {
 }
 
 func (ev *EventActiveSensing) Encode(w io.Writer, status, channel *uint8) error {
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -870,7 +882,7 @@ func (ev *EventActiveSensing) Encode(w io.Writer, status, channel *uint8) error 
 }
 
 func (ev *EventActiveSensing) EncodeLen(status, channel *uint8) (int64, error) {
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -894,7 +906,7 @@ func (ev *EventUnknown) Encode(w io.Writer, status, channel *uint8) error {
 	if ev.RawData[0] < 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.RawData[0]))
 	}
-	err := ev.DeltaTime.Encode(w)
+	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
 	}
@@ -928,7 +940,7 @@ func (ev *EventUnknown) EncodeLen(status, channel *uint8) (int64, error) {
 	if ev.RawData[0] < 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.RawData[0]))
 	}
-	length, err := ev.DeltaTime.EncodeLen()
+	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
 	}
@@ -951,7 +963,6 @@ func (ev *EventUnknown) EncodeLen(status, channel *uint8) (int64, error) {
 	}
 	return length, err
 }
-
 func (ev *EventUnknown) Status() uint8 {
 	if len(ev.RawData) == 0 {
 		panic(newSMFEncodeError(ev, errors.New("invalid MIDI event")))
@@ -997,7 +1008,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 
 	eventCommon := EventCommon{
 		FilePosition: pos,
-		DeltaTime:    delta,
+		DeltaTick:    delta,
 		Channel:      *channel,
 	}
 
@@ -1011,7 +1022,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 || buf[2] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:3])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 		}
 		event = &EventNoteOff{
 			EventCommon: eventCommon,
@@ -1027,7 +1038,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 || buf[2] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:3])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 		}
 		event = &EventNoteOn{
 			EventCommon: eventCommon,
@@ -1043,7 +1054,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 || buf[2] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:3])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 		}
 		event = &EventPolyphonicKeyPressure{
 			EventCommon: eventCommon,
@@ -1059,7 +1070,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 || buf[2] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:3])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 		}
 		event = &EventControlChange{
 			EventCommon: eventCommon,
@@ -1075,11 +1086,11 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:2])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:2])))
 		}
 		event = &EventProgramChange{
 			EventCommon: eventCommon,
-			Program:     buf[1] & 0x7f,
+			Program:     (buf[1] & 0x7f) + 1,
 		}
 	case 0xd0:
 		_, err = io.ReadFull(r, buf[1:2])
@@ -1090,7 +1101,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:2])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:2])))
 		}
 		event = &EventChannelPressure{
 			EventCommon: eventCommon,
@@ -1105,7 +1116,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 			return
 		}
 		if buf[1] >= 0x80 || buf[2] >= 0x80 {
-			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:3])))
+			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 		}
 		event = &EventPitchWheelChange{
 			EventCommon: eventCommon,
@@ -1138,7 +1149,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 				return
 			}
 			if buf[1] >= 0x80 {
-				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:2])))
+				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:2])))
 			}
 			event = &EventTimeCodeQuarterFrame{
 				EventCommon: eventCommon,
@@ -1154,7 +1165,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 				return
 			}
 			if buf[1] >= 0x80 || buf[2] >= 0x80 {
-				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:3])))
+				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 			}
 			event = &EventSongPositionPointer{
 				EventCommon:  eventCommon,
@@ -1169,7 +1180,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 				return
 			}
 			if buf[1] >= 0x80 {
-				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:2])))
+				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:2])))
 			}
 			event = &EventSongSelect{
 				EventCommon: eventCommon,
@@ -1226,7 +1237,7 @@ func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback Warnin
 				return
 			}
 			if buf[1] >= 0x80 {
-				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event %#01x", buf[:2])))
+				warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:2])))
 				return
 			}
 			var length VLQ

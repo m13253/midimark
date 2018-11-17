@@ -27,9 +27,7 @@ package midimark
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/xml"
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -52,6 +50,9 @@ func (mtrk *MTrk) Encode(w io.Writer) error {
 	copy(buf[:4], []byte{'M', 'T', 'r', 'k'})
 	binary.BigEndian.PutUint32(buf[4:8], uint32(length))
 	_, err := w.Write(buf[:])
+	if err != nil {
+		return err
+	}
 	status = uint8(0)
 	channel = uint8(0xff)
 	for _, event := range mtrk.Events {
@@ -61,29 +62,6 @@ func (mtrk *MTrk) Encode(w io.Writer) error {
 		}
 	}
 	return nil
-}
-
-func (mtrk *MTrk) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	start = xml.StartElement{
-		Name: xml.Name{Local: "MTrk"},
-		Attr: []xml.Attr{
-			xml.Attr{
-				Name:  xml.Name{Local: "pos"},
-				Value: fmt.Sprintf("%#x", mtrk.FilePosition),
-			},
-		},
-	}
-	err := e.EncodeToken(start)
-	if err != nil {
-		return err
-	}
-	for _, event := range mtrk.Events {
-		err = e.Encode(event)
-		if err != nil {
-			return err
-		}
-	}
-	return e.EncodeToken(start.End())
 }
 
 func DecodeMTrk(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *MTrk, err error) {
