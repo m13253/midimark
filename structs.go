@@ -26,12 +26,15 @@ package midimark
 
 import (
 	"io"
+
+	"github.com/beevik/etree"
 )
 
 type Event interface {
 	Common() *EventCommon
 	Encode(w io.Writer, status, channel *uint8) error
 	EncodeLen(status, channel *uint8) (int64, error)
+	EncodeXML() *etree.Element
 	Status() uint8
 }
 

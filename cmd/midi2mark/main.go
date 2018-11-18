@@ -25,12 +25,12 @@
 package main
 
 import (
-	"encoding/xml"
 	"fmt"
 	"log"
 	"os"
 
 	midimark "../.."
+	"github.com/beevik/etree"
 )
 
 func warningCallback(err error) {
@@ -70,11 +70,10 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	markup, err := xml.MarshalIndent(sequence, "", "    ")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	_, err = output.Write(markup)
+	markup := etree.NewDocument()
+	markup.AddChild(sequence.EncodeXML())
+	markup.Indent(4)
+	_, err = markup.WriteTo(output)
 	if err != nil {
 		log.Fatalln(err)
 	}

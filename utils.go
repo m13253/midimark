@@ -26,6 +26,8 @@ package midimark
 
 import (
 	"io"
+	"strconv"
+	"strings"
 )
 
 type limitReadSeeker struct {
@@ -40,6 +42,19 @@ func tell(r io.ReadSeeker) int64 {
 		return -1
 	}
 	return pos
+}
+
+func parseHexDump(hexdump string) ([]byte, error) {
+	fields := strings.Fields(hexdump)
+	data := make([]byte, len(fields))
+	for i, field := range fields {
+		b, err := strconv.ParseUint(field, 16, 8)
+		if err != nil {
+			return data[:i], err
+		}
+		data[i] = byte(b)
+	}
+	return data, nil
 }
 
 func newLimitReadSeeker(r io.ReadSeeker, n int64) (*limitReadSeeker, error) {

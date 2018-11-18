@@ -28,13 +28,16 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
+
+	"github.com/beevik/etree"
 )
 
 func (mtrk *MTrk) Encode(w io.Writer) error {
 	length := int64(0)
 	status := uint8(0)
-	channel := uint8(0xff)
+	channel := uint8(0)
 	for _, event := range mtrk.Events {
 		appendLength, err := event.EncodeLen(&status, &channel)
 		if err != nil {
@@ -54,7 +57,7 @@ func (mtrk *MTrk) Encode(w io.Writer) error {
 		return err
 	}
 	status = uint8(0)
-	channel = uint8(0xff)
+	channel = uint8(0)
 	for _, event := range mtrk.Events {
 		err = event.Encode(w, &status, &channel)
 		if err != nil {
@@ -62,6 +65,15 @@ func (mtrk *MTrk) Encode(w io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func (mtrk *MTrk) EncodeXML() *etree.Element {
+	el := etree.NewElement("MTrk")
+	el.CreateAttr("pos", fmt.Sprintf("%#x", mtrk.FilePosition))
+	for _, event := range mtrk.Events {
+		el.AddChild(event.EncodeXML())
+	}
+	return el
 }
 
 func DecodeMTrk(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *MTrk, err error) {
@@ -103,7 +115,7 @@ func DecodeMTrk(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *MTrk, e
 		Events:       make([]Event, 0),
 	}
 	status := uint8(0x80)
-	channel := uint8(0xff)
+	channel := uint8(0)
 
 	// Strangely there are wild MIDI files with MTrk length == 0
 	if length == 0 {

@@ -30,6 +30,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/beevik/etree"
 )
 
 func (mthd *MThd) Encode(w io.Writer) error {
@@ -62,6 +64,18 @@ func (mthd *MThd) Encode(w io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func (mthd *MThd) EncodeXML() *etree.Element {
+	el := etree.NewElement("MThd")
+	el.CreateAttr("pos", fmt.Sprintf("%#x", mthd.FilePosition))
+	el.CreateAttr("format", fmt.Sprintf("%d", mthd.Format))
+	el.CreateAttr("ntrks", fmt.Sprintf("%d", mthd.NTrks))
+	el.CreateAttr("division", fmt.Sprintf("%d", mthd.Division))
+	for _, mtrk := range mthd.Tracks {
+		el.AddChild(mtrk.EncodeXML())
+	}
+	return el
 }
 
 func DecodeMThd(r io.ReadSeeker, warningCallback WarningCallback) (mthd *MThd, err error) {
