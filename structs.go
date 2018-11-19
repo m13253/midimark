@@ -58,6 +58,7 @@ type MThd struct {
 
 type MTrk struct {
 	FilePosition int64
+	TempoTable   *TempoTable
 	Events       []Event
 }
 
@@ -312,6 +313,18 @@ type MetaEventUnknown struct {
 type EventUnknown struct {
 	EventCommon
 	Unknown []byte
+}
+
+type TempoTable struct {
+	Framerate uint8
+	Division  uint16
+	Changes   []TempoChange
+}
+
+type TempoChange struct {
+	AbsTick      uint64
+	FilePosition int64
+	UsPerQuarter uint32
 }
 
 func (ev *EventCommon) Common() *EventCommon {
