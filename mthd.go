@@ -91,6 +91,14 @@ func (mthd *MThd) EncodeXML() *etree.Element {
 	return el
 }
 
+func (mthd *MThd) EncodeXMLToDocument(w io.Writer) (n int64, err error) {
+	doc := etree.NewDocument()
+	el := mthd.EncodeXML()
+	doc.AddChild(el)
+	doc.Indent(4)
+	return doc.WriteTo(w)
+}
+
 func DecodeMThdFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mthd *MThd, err error) {
 	pos := tell(r)
 	var buf [14]byte
@@ -185,31 +193,41 @@ func DecodeMThdFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mthd *
 
 func DecodeMThdFromXML(el *etree.Element) (*MThd, error) {
 	if el.Tag != "MThd" {
-		return nil, newXMLDecodeError(el, errors.New("can not find an MThd tag"))
+		return nil, newXMLDecodeError(el, fmt.Errorf("expect an <MThd> tag, but got <%s>", el.Tag))
 	}
 	pos, err := strconv.ParseInt(el.SelectAttrValue("pos", "0"), 0, 64)
 	if err != nil {
-		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: pos=%q", el.SelectAttrValue("pos", "")))
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: pos=%q", el.SelectAttrValue("pos", "")))
 	}
 	format, err := strconv.ParseUint(el.SelectAttrValue("format", ""), 0, 16)
 	if err != nil {
-		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: format=%q", el.SelectAttrValue("format", "")))
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: format=%q", el.SelectAttrValue("format", "")))
 	}
 	ntrks, err := strconv.ParseUint(el.SelectAttrValue("ntrks", ""), 0, 16)
 	if err != nil {
-		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: ntrks=%q", el.SelectAttrValue("ntrks", "")))
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: ntrks=%q", el.SelectAttrValue("ntrks", "")))
 	}
-	framerate, err := strconv.ParseUint(el.SelectAttrValue("framerate", ""), 0, 8)
+	framerate, err := strconv.ParseUint(el.SelectAttrValue("framerate", ""), 0, 7)
 	if err != nil {
-		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: framerate=%q", el.SelectAttrValue("framerate", "")))
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: framerate=%q", el.SelectAttrValue("framerate", "")))
 	}
-	division, err := strconv.ParseUint(el.SelectAttrValue("division", ""), 0, 16)
+	division, err := strconv.ParseUint(el.SelectAttrValue("division", ""), 0, 15)
 	if err != nil {
-		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: division=%q", el.SelectAttrValue("division", "")))
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: division=%q", el.SelectAttrValue("division", "")))
 	}
 	undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
 	if err != nil {
-		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: undecoded=%q", el.SelectAttrValue("undecoded", "")))
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: undecoded=%q", el.SelectAttrValue("undecoded", "")))
+	}
+	tracks := make([]*MTrk, 0)
+	for _, child := range el.Child {
+		if childEl, ok := child.(*etree.Element); ok {
+			mtrk, err := DecodeMTrkFromXML(childEl)
+			if err != nil {
+				return nil, err
+			}
+			tracks = append(tracks, mtrk)
+		}
 	}
 	return &MThd{
 		FilePosition: pos,
@@ -218,5 +236,21 @@ func DecodeMThdFromXML(el *etree.Element) (*MThd, error) {
 		Framerate:    uint8(framerate),
 		Division:     uint16(division),
 		Undecoded:    undecoded,
+		Tracks:       tracks,
 	}, nil
+}
+
+func DecodeXMLFromDocument(r io.Reader) (mthd *MThd, n int64, err error) {
+	doc := etree.NewDocument()
+	doc.ReadSettings.Permissive = true
+	n, err = doc.ReadFrom(r)
+	if err != nil {
+		return nil, n, newXMLDecodeError(doc, err)
+	}
+	root := doc.Root()
+	if root != nil {
+		return nil, n, newXMLDecodeError(doc, errors.New("XML file contains no root tag"))
+	}
+	mthd, err = DecodeMThdFromXML(root)
+	return
 }

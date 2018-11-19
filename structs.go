@@ -306,13 +306,13 @@ type MetaEventSequencerSpecific struct {
 
 type MetaEventUnknown struct {
 	EventCommon
-	RawType uint8
-	RawData []byte
+	Type    uint8
+	Unknown []byte
 }
 
 type EventUnknown struct {
 	EventCommon
-	RawData []byte
+	Unknown []byte
 }
 
 func (ev *EventCommon) Common() *EventCommon {

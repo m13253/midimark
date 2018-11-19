@@ -29,6 +29,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 
 	"github.com/beevik/etree"
 )
@@ -860,16 +862,16 @@ func (ev *MetaEventUnknown) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.RawData))
+	el.CreateAttr("unknown", fmt.Sprintf("% x", ev.Unknown))
 	return el
 }
 
 func (ev *MetaEventUnknown) MetaData() ([]byte, error) {
-	return ev.RawData, nil
+	return ev.Unknown, nil
 }
 
 func (ev *MetaEventUnknown) MetaLen() (VLQ, error) {
-	length := len(ev.RawData)
+	length := len(ev.Unknown)
 	if length > MaxVLQ {
 		return 0, newSMFEncodeError(ev, errors.New("meta event too long"))
 	}
@@ -881,158 +883,387 @@ func (ev *MetaEventUnknown) Status() uint8 {
 }
 
 func (ev *MetaEventUnknown) MetaType() uint8 {
-	return ev.RawType
+	return ev.Type
 }
 
 func decodeMetaEvent(raw *MetaEventUnknown, warningCallback WarningCallback) Event {
 	switch raw.MetaType() {
 	case 0x00:
-		if len(raw.RawData) == 0 {
+		if len(raw.Unknown) == 0 {
 			return &MetaEventSequenceNumber{
 				EventCommon:    raw.EventCommon,
 				SequenceNumber: nil,
 			}
 		}
-		if len(raw.RawData) < 2 {
+		if len(raw.Unknown) < 2 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
-		sequenceNumber := binary.BigEndian.Uint16(raw.RawData[:2])
+		sequenceNumber := binary.BigEndian.Uint16(raw.Unknown[:2])
 		return &MetaEventSequenceNumber{
 			EventCommon:    raw.EventCommon,
 			SequenceNumber: &sequenceNumber,
-			Undecoded:      raw.RawData[2:],
+			Undecoded:      raw.Unknown[2:],
 		}
 	case 0x01:
 		return &MetaEventTextEvent{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x02:
 		return &MetaEventCopyrightNotice{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x03:
 		return &MetaEventInstrumentName{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x04:
 		return &MetaEventTextEvent{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x05:
 		return &MetaEventLyric{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x06:
 		return &MetaEventMarker{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x07:
 		return &MetaEventCuePoint{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x08:
 		return &MetaEventProgramName{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x09:
 		return &MetaEventDeviceName{
 			EventCommon: raw.EventCommon,
-			Text:        string(raw.RawData),
+			Text:        string(raw.Unknown),
 		}
 	case 0x20:
-		if len(raw.RawData) < 1 {
+		if len(raw.Unknown) < 1 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
-		raw.EventCommon.Channel = raw.RawData[0] + 1
+		raw.EventCommon.Channel = raw.Unknown[0] + 1
 		return &MetaEventMIDIChannelPrefix{
 			EventCommon:   raw.EventCommon,
 			ChannelPrefix: raw.EventCommon.Channel,
-			Undecoded:     raw.RawData[1:],
+			Undecoded:     raw.Unknown[1:],
 		}
 	case 0x2f:
 		return &MetaEventEndOfTrack{
 			EventCommon: raw.EventCommon,
-			Undecoded:   raw.RawData,
+			Undecoded:   raw.Unknown,
 		}
 	case 0x51:
-		if len(raw.RawData) < 3 {
+		if len(raw.Unknown) < 3 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
 		return &MetaEventSetTempo{
 			EventCommon:  raw.EventCommon,
-			UsPerQuarter: uint32(raw.RawData[0])<<16 | uint32(raw.RawData[1])<<8 | uint32(raw.RawData[2]),
-			Undecoded:    raw.RawData[3:],
+			UsPerQuarter: uint32(raw.Unknown[0])<<16 | uint32(raw.Unknown[1])<<8 | uint32(raw.Unknown[2]),
+			Undecoded:    raw.Unknown[3:],
 		}
 	case 0x54:
-		if len(raw.RawData) < 5 {
+		if len(raw.Unknown) < 5 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
 		event := &MetaEventSMPTEOffset{
 			EventCommon: raw.EventCommon,
-			Framerate:   map[uint8]uint8{0x00: 24, 0x20: 25, 0x40: 29, 0x60: 30}[raw.RawData[0]&0x60],
-			Hours:       raw.RawData[0] & 0x1f,
-			ColorFrame:  (raw.RawData[1] & 0x40) != 0,
-			Minutes:     raw.RawData[1] & 0x3f,
-			Seconds:     raw.RawData[2] & 0x7f,
-			Negative:    (raw.RawData[3] & 0x40) != 0,
-			Frames:      raw.RawData[3] & 0x3f,
-			Fractional:  raw.RawData[4] & 0x7f,
-			Undecoded:   raw.RawData[5:],
+			Framerate:   map[uint8]uint8{0x00: 24, 0x20: 25, 0x40: 29, 0x60: 30}[raw.Unknown[0]&0x60],
+			ColorFrame:  (raw.Unknown[1] & 0x40) != 0,
+			Negative:    (raw.Unknown[3] & 0x40) != 0,
+			Hours:       raw.Unknown[0] & 0x1f,
+			Minutes:     raw.Unknown[1] & 0x3f,
+			Seconds:     raw.Unknown[2] & 0x7f,
+			Frames:      raw.Unknown[3] & 0x3f,
+			Fractional:  raw.Unknown[4] & 0x7f,
+			Undecoded:   raw.Unknown[5:],
 		}
 		return event
 	case 0x58:
-		if len(raw.RawData) < 4 {
+		if len(raw.Unknown) < 4 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
 		return &MetaEventTimeSignature{
 			EventCommon:                      raw.EventCommon,
-			Numerator:                        raw.RawData[0],
-			Denominator:                      raw.RawData[1],
-			MIDIClocksPerMetronome:           raw.RawData[2],
-			ThirtySecondNotesPer24MIDIClocks: raw.RawData[3],
-			Undecoded:                        raw.RawData[4:],
+			Numerator:                        raw.Unknown[0],
+			Denominator:                      raw.Unknown[1],
+			MIDIClocksPerMetronome:           raw.Unknown[2],
+			ThirtySecondNotesPer24MIDIClocks: raw.Unknown[3],
+			Undecoded:                        raw.Unknown[4:],
 		}
 	case 0x59:
-		if len(raw.RawData) < 2 {
+		if len(raw.Unknown) < 2 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
-		keySignature := KeySignature(binary.BigEndian.Uint16(raw.RawData[:2]))
+		keySignature := KeySignature(binary.BigEndian.Uint16(raw.Unknown[:2]))
 		return &MetaEventKeySignature{
 			EventCommon:  raw.EventCommon,
 			KeySignature: keySignature,
-			Undecoded:    raw.RawData[2:],
+			Undecoded:    raw.Unknown[2:],
 		}
 	case 0x60:
-		if len(raw.RawData) < 1 {
+		if len(raw.Unknown) < 1 {
 			warningCallback(newSMFDecodeError(raw.FilePosition, errors.New("incomplete meta event")))
 			return raw
 		}
 		return &MetaEventXMFPatchTypePrefix{
 			EventCommon: raw.EventCommon,
-			Param:       raw.RawData[0],
-			Undecoded:   raw.RawData[1:],
+			Param:       raw.Unknown[0],
+			Undecoded:   raw.Unknown[1:],
 		}
 	case 0x7f:
 		return &MetaEventSequencerSpecific{
 			EventCommon: raw.EventCommon,
-			Data:        raw.RawData,
+			Data:        raw.Unknown,
 		}
 	default:
 		return raw
+	}
+}
+
+func decodeMetaEventFromXML(el *etree.Element, eventCommon EventCommon) (Event, error) {
+	metaType, err := strconv.ParseUint(el.SelectAttrValue("type", ""), 0, 7)
+	if err != nil {
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute: type=%q", el.SelectAttrValue("type", "")))
+	}
+	switch metaType {
+	case 0x00:
+		sequenceNumberStr := el.SelectAttrValue("sequence-number", "")
+		var sequenceNumber *uint16
+		if sequenceNumberStr != "" {
+			s, err := strconv.ParseUint(sequenceNumberStr, 0, 16)
+			if err != nil {
+				return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: sequence-number=%q", metaType, el.SelectAttrValue("sequence-number", "")))
+			}
+			sequenceNumber = new(uint16)
+			*sequenceNumber = uint16(s)
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventSequenceNumber{
+			EventCommon:    eventCommon,
+			SequenceNumber: sequenceNumber,
+			Undecoded:      undecoded,
+		}, nil
+	case 0x01:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventTextEvent{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x02:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventCopyrightNotice{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x03:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventSequenceTrackName{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x04:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventInstrumentName{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x05:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventLyric{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x06:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventMarker{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x07:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventCuePoint{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x08:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventProgramName{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x09:
+		text := el.SelectAttrValue("text", "")
+		return &MetaEventDeviceName{
+			EventCommon: eventCommon,
+			Text:        text,
+		}, nil
+	case 0x20:
+		channelPrefix, err := strconv.ParseUint(el.SelectAttrValue("channel-prefix", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: channel-prefix=%q", metaType, el.SelectAttrValue("channel-prefix", "")))
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		eventCommon.Channel = uint8(channelPrefix)
+		return &MetaEventMIDIChannelPrefix{
+			EventCommon:   eventCommon,
+			ChannelPrefix: eventCommon.Channel,
+			Undecoded:     undecoded,
+		}, nil
+	case 0x51:
+		usPerQuarter, err := strconv.ParseUint(el.SelectAttrValue("us-per-quarter", ""), 0, 32)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: us-per-quarter=%q", metaType, el.SelectAttrValue("us-per-quarter", "")))
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventSetTempo{
+			EventCommon:  eventCommon,
+			UsPerQuarter: uint32(usPerQuarter),
+			Undecoded:    undecoded,
+		}, nil
+	case 0x54:
+		framerate, err := strconv.ParseUint(el.SelectAttrValue("framerate", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: framerate=%q", metaType, el.SelectAttrValue("framerate", "")))
+		}
+		colorFrame := false
+		colorFrameStr := el.SelectAttrValue("color-frame", "")
+		switch colorFrameStr {
+		case "", "no":
+			colorFrame = false
+		case "yes":
+			colorFrame = true
+		default:
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: color-frame=%q", metaType, el.SelectAttrValue("color-frame", "")))
+		}
+		timecode := el.SelectAttrValue("timecode", "")
+		negative := strings.HasPrefix(timecode, "-")
+		var hours, minutes, seconds, frames, fractional uint8
+		if !negative {
+			_, err = fmt.Sscanf(timecode, "%d:%d:%d:%d.%d", &hours, &minutes, &seconds, &frames, &fractional)
+		} else {
+			_, err = fmt.Sscanf(timecode, "-%d:%d:%d:%d.%d", &hours, &minutes, &seconds, &frames, &fractional)
+		}
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: timecode=%q", metaType, el.SelectAttrValue("timecode", "")))
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventSMPTEOffset{
+			EventCommon: eventCommon,
+			Framerate:   uint8(framerate),
+			ColorFrame:  colorFrame,
+			Negative:    negative,
+			Hours:       hours,
+			Minutes:     minutes,
+			Seconds:     seconds,
+			Frames:      frames,
+			Fractional:  fractional,
+			Undecoded:   undecoded,
+		}, nil
+	case 0x58:
+		numerator, err := strconv.ParseUint(el.SelectAttrValue("numerator", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: numerator=%q", metaType, el.SelectAttrValue("numerator", "")))
+		}
+		denominator, err := strconv.ParseUint(el.SelectAttrValue("denominator", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: denominator=%q", metaType, el.SelectAttrValue("denominator", "")))
+		}
+		midiClocksPerMetronome, err := strconv.ParseUint(el.SelectAttrValue("midi-clocks-per-metronome", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: midi-clocks-per-metronome=%q", metaType, el.SelectAttrValue("midi-clocks-per-metronome", "")))
+		}
+		thirtySecondNotesPer24MIDIClocks, err := strconv.ParseUint(el.SelectAttrValue("thirty-second-notes-per-24-midi-clocks", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: thirty-second-notes-per-24-midi-clocks=%q", metaType, el.SelectAttrValue("thirty-second-notes-per-24-midi-clocks", "")))
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventTimeSignature{
+			EventCommon:                      eventCommon,
+			Numerator:                        uint8(numerator),
+			Denominator:                      uint8(denominator),
+			MIDIClocksPerMetronome:           uint8(midiClocksPerMetronome),
+			ThirtySecondNotesPer24MIDIClocks: uint8(thirtySecondNotesPer24MIDIClocks),
+			Undecoded:                        undecoded,
+		}, nil
+	case 0x59:
+		keySignature, err := ParseKeySignature(el.SelectAttrValue("key-signature", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: key-signature=%q", metaType, el.SelectAttrValue("key-signature", "")))
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventKeySignature{
+			EventCommon:  eventCommon,
+			KeySignature: keySignature,
+			Undecoded:    undecoded,
+		}, nil
+	case 0x60:
+		param, err := strconv.ParseUint(el.SelectAttrValue("param", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: param=%q", metaType, el.SelectAttrValue("param", "")))
+		}
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventXMFPatchTypePrefix{
+			EventCommon: eventCommon,
+			Param:       uint8(param),
+			Undecoded:   undecoded,
+		}, nil
+	case 0x7f:
+		data, err := parseHexDump(el.SelectAttrValue("data", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: data=%q", metaType, el.SelectAttrValue("data", "")))
+		}
+		return &MetaEventSequencerSpecific{
+			EventCommon: eventCommon,
+			Data:        data,
+		}, nil
+	default:
+		unknown, err := parseHexDump(el.SelectAttrValue("unknown", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta event: type=%q", el.SelectAttrValue("type", "")))
+		}
+		return &MetaEventUnknown{
+			EventCommon: eventCommon,
+			Unknown:     unknown,
+		}, nil
 	}
 }
 

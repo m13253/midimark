@@ -26,9 +26,7 @@ package main
 
 import (
 	"bufio"
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -61,12 +59,7 @@ func main() {
 		}
 		defer output.Close()
 	}
-	markup, err := ioutil.ReadAll(input)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	var sequence midimark.MThd
-	err = xml.Unmarshal(markup, &sequence)
+	sequence, _, err := midimark.DecodeXMLFromDocument(input)
 	if err != nil {
 		log.Fatalln(err)
 	}

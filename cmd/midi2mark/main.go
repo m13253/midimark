@@ -30,7 +30,6 @@ import (
 	"os"
 
 	midimark "../.."
-	"github.com/beevik/etree"
 )
 
 func warningCallback(err error) {
@@ -70,10 +69,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	markup := etree.NewDocument()
-	markup.AddChild(sequence.EncodeXML())
-	markup.Indent(4)
-	_, err = markup.WriteTo(output)
+	_, err = sequence.EncodeXMLToDocument(output)
 	if err != nil {
 		log.Fatalln(err)
 	}

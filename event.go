@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/beevik/etree"
 )
@@ -1177,11 +1178,11 @@ func (ev *EventActiveSensing) Status() uint8 {
 }
 
 func (ev *EventUnknown) EncodeSMF(w io.Writer, status, channel *uint8) error {
-	if len(ev.RawData) == 0 {
+	if len(ev.Unknown) == 0 {
 		return nil
 	}
-	if ev.RawData[0] < 0x80 {
-		return newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.RawData[0]))
+	if ev.Unknown[0] < 0x80 {
+		return newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.Unknown[0]))
 	}
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
@@ -1190,11 +1191,11 @@ func (ev *EventUnknown) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Status() < 0xf0 {
 		ev.Channel = (ev.Status() & 0x0f) + 1
 		if *status == ev.Status() {
-			_, err = w.Write(ev.RawData[1:])
+			_, err = w.Write(ev.Unknown[1:])
 		} else {
 			*status = ev.Status()
 			*channel = ev.Channel
-			_, err = w.Write(ev.RawData)
+			_, err = w.Write(ev.Unknown)
 		}
 	} else {
 		*status = ev.Status()
@@ -1205,17 +1206,17 @@ func (ev *EventUnknown) EncodeSMF(w io.Writer, status, channel *uint8) error {
 				return err
 			}
 		}
-		_, err = w.Write(ev.RawData)
+		_, err = w.Write(ev.Unknown)
 	}
 	return err
 }
 
 func (ev *EventUnknown) EncodeSMFLen(status, channel *uint8) (int64, error) {
-	if len(ev.RawData) == 0 {
+	if len(ev.Unknown) == 0 {
 		return 0, nil
 	}
-	if ev.RawData[0] < 0x80 {
-		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.RawData[0]))
+	if ev.Unknown[0] < 0x80 {
+		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.Unknown[0]))
 	}
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
@@ -1224,11 +1225,11 @@ func (ev *EventUnknown) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Status() < 0xf0 {
 		ev.Channel = (ev.Status() & 0x0f) + 1
 		if *status == ev.Status() {
-			length += int64(len(ev.RawData) - 1)
+			length += int64(len(ev.Unknown) - 1)
 		} else {
 			*status = ev.Status()
 			*channel = ev.Channel
-			length += int64(len(ev.RawData))
+			length += int64(len(ev.Unknown))
 		}
 	} else {
 		*status = ev.Status()
@@ -1236,30 +1237,30 @@ func (ev *EventUnknown) EncodeSMFLen(status, channel *uint8) (int64, error) {
 			*channel = ev.Channel
 			length += 5
 		}
-		length += int64(len(ev.RawData))
+		length += int64(len(ev.Unknown))
 	}
 	return length, err
 }
 
 func (ev *EventUnknown) EncodeRealtime() ([]byte, error) {
-	return ev.RawData, nil
+	return ev.Unknown, nil
 }
 
 func (ev *EventUnknown) EncodeXML() *etree.Element {
 	el := etree.NewElement("Event")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.RawData))
+	el.CreateAttr("unknown", fmt.Sprintf("% x", ev.Unknown))
 	return el
 }
 
 func (ev *EventUnknown) Status() uint8 {
-	if len(ev.RawData) == 0 {
+	if len(ev.Unknown) == 0 {
 		panic(newSMFEncodeError(ev, errors.New("invalid MIDI event")))
 	}
-	if ev.RawData[0] < 0x80 {
-		panic(newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.RawData[0])))
+	if ev.Unknown[0] < 0x80 {
+		panic(newSMFEncodeError(ev, fmt.Errorf("invalid status byte %#02x", ev.Unknown[0])))
 	}
-	return ev.RawData[0]
+	return ev.Unknown[0]
 }
 
 func decodeEvent(r io.ReadSeeker, realtime bool, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
@@ -1552,12 +1553,12 @@ func decodeEvent(r io.ReadSeeker, realtime bool, status, channel *uint8, warning
 			}
 			meta := &MetaEventUnknown{
 				EventCommon: eventCommon,
-				RawType:     buf[1] & 0x7f,
-				RawData:     make([]byte, length),
+				Type:        buf[1] & 0x7f,
+				Unknown:     make([]byte, length),
 			}
 			var n int
-			n, err = io.ReadFull(r, meta.RawData)
-			meta.RawData = meta.RawData[:n]
+			n, err = io.ReadFull(r, meta.Unknown)
+			meta.Unknown = meta.Unknown[:n]
 			event = decodeMetaEvent(meta, warningCallback)
 			if midiChannelPrefix, ok := event.(*MetaEventMIDIChannelPrefix); ok {
 				*channel = midiChannelPrefix.Channel
@@ -1568,7 +1569,7 @@ func decodeEvent(r io.ReadSeeker, realtime bool, status, channel *uint8, warning
 		default:
 			event = &EventUnknown{
 				EventCommon: eventCommon,
-				RawData:     []byte{buf[0]},
+				Unknown:     []byte{buf[0]},
 			}
 		}
 	}
@@ -1582,4 +1583,193 @@ func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback
 func DecodeEventFromRealtime(r io.ReadSeeker, status *uint8, warningCallback WarningCallback) (event Event, err error) {
 	channel := uint8(0)
 	return decodeEvent(r, true, status, &channel, warningCallback)
+}
+
+func DecodeEventFromXML(el *etree.Element) (Event, error) {
+	pos, err := strconv.ParseInt(el.SelectAttrValue("pos", "0"), 0, 64)
+	if err != nil {
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: pos=%q", el.SelectAttrValue("pos", "")))
+	}
+	tick, err := strconv.ParseUint(el.SelectAttrValue("tick", "0"), 0, 64)
+	if err != nil {
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: tick=%q", el.SelectAttrValue("tick", "")))
+	}
+	delta, err := strconv.ParseUint(el.SelectAttrValue("delta", "0"), 0, 28)
+	if err != nil {
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: delta=%q", el.SelectAttrValue("delta", "")))
+	}
+	channel, err := strconv.ParseUint(el.SelectAttrValue("channel", "0"), 0, 8)
+	if err != nil {
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: channel=%q", el.SelectAttrValue("channel", "")))
+	}
+	eventCommon := EventCommon{
+		FilePosition: pos,
+		AbsTick:      tick,
+		DeltaTick:    VLQ(delta),
+		Channel:      uint8(channel),
+	}
+
+	switch el.Tag {
+	case "NoteOff":
+		key, err := ParseKey(el.SelectAttrValue("key", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: key=%q", el.SelectAttrValue("key", "")))
+		}
+		velocity, err := strconv.ParseUint(el.SelectAttrValue("velocity", ""), 0, 7)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: velocity=%q", el.SelectAttrValue("velocity", "")))
+		}
+		return &EventNoteOff{
+			EventCommon: eventCommon,
+			Key:         key,
+			Velocity:    uint8(velocity),
+		}, nil
+	case "NoteOn":
+		key, err := ParseKey(el.SelectAttrValue("key", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: key=%q", el.SelectAttrValue("key", "")))
+		}
+		velocity, err := strconv.ParseUint(el.SelectAttrValue("velocity", ""), 0, 7)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: velocity=%q", el.SelectAttrValue("velocity", "")))
+		}
+		return &EventNoteOn{
+			EventCommon: eventCommon,
+			Key:         key,
+			Velocity:    uint8(velocity),
+		}, nil
+	case "KeyPressure":
+		key, err := ParseKey(el.SelectAttrValue("key", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: key=%q", el.SelectAttrValue("key", "")))
+		}
+		velocity, err := strconv.ParseUint(el.SelectAttrValue("velocity", ""), 0, 7)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: velocity=%q", el.SelectAttrValue("velocity", "")))
+		}
+		return &EventPolyphonicKeyPressure{
+			EventCommon: eventCommon,
+			Key:         key,
+			Velocity:    uint8(velocity),
+		}, nil
+	case "ControlChange":
+		control, err := strconv.ParseUint(el.SelectAttrValue("control", ""), 0, 7)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: control=%q", el.SelectAttrValue("control", "")))
+		}
+		value, err := strconv.ParseUint(el.SelectAttrValue("value", ""), 0, 7)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: value=%q", el.SelectAttrValue("value", "")))
+		}
+		return &EventControlChange{
+			EventCommon: eventCommon,
+			Control:     uint8(control),
+			Value:       uint8(value),
+		}, nil
+	case "ProgramChange":
+		program, err := strconv.ParseUint(el.SelectAttrValue("program", ""), 0, 8)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: program=%q", el.SelectAttrValue("program", "")))
+		}
+		return &EventProgramChange{
+			EventCommon: eventCommon,
+			Program:     uint8(program),
+		}, nil
+	case "PitchWheel":
+		pitch, err := strconv.ParseInt(el.SelectAttrValue("pitch", ""), 0, 14)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: pitch=%q", el.SelectAttrValue("pitch", "")))
+		}
+		return &EventPitchWheelChange{
+			EventCommon: eventCommon,
+			Pitch:       int16(pitch),
+		}, nil
+	case "SysEx":
+		data, err := parseHexDump(el.SelectAttrValue("data", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: data=%q", el.SelectAttrValue("data", "")))
+		}
+		return &EventSystemExclusive{
+			EventCommon: eventCommon,
+			Data:        data,
+		}, nil
+	case "TimeCodeQuarterFrame":
+		messageType, err := strconv.ParseUint(el.SelectAttrValue("message-type", ""), 0, 3)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: message-type=%q", el.SelectAttrValue("message-type", "")))
+		}
+		values, err := strconv.ParseUint(el.SelectAttrValue("values", ""), 0, 4)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: values=%q", el.SelectAttrValue("values", "")))
+		}
+		return &EventTimeCodeQuarterFrame{
+			EventCommon: eventCommon,
+			MessageType: uint8(messageType),
+			Values:      uint8(values),
+		}, nil
+	case "SongPosition":
+		songPosition, err := strconv.ParseUint(el.SelectAttrValue("song-position", ""), 0, 14)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: song-position=%q", el.SelectAttrValue("song-position", "")))
+		}
+		return &EventSongPositionPointer{
+			EventCommon:  eventCommon,
+			SongPosition: uint16(songPosition),
+		}, nil
+	case "SongSelect":
+		songNumber, err := strconv.ParseUint(el.SelectAttrValue("song-number", ""), 0, 7)
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: song-number=%q", el.SelectAttrValue("song-number", "")))
+		}
+		return &EventSongSelect{
+			EventCommon: eventCommon,
+			SongNumber:  uint8(songNumber),
+		}, nil
+	case "TuneRequest":
+		return &EventTuneRequest{
+			EventCommon: eventCommon,
+		}, nil
+	case "Escape":
+		data, err := parseHexDump(el.SelectAttrValue("data", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: data=%q", el.SelectAttrValue("data", "")))
+		}
+		return &EventEscape{
+			EventCommon: eventCommon,
+			Data:        data,
+		}, nil
+	case "TimingClock":
+		return &EventTimingClock{
+			EventCommon: eventCommon,
+		}, nil
+	case "Start":
+		return &EventStart{
+			EventCommon: eventCommon,
+		}, nil
+	case "Continue":
+		return &EventContinue{
+			EventCommon: eventCommon,
+		}, nil
+	case "Stop":
+		return &EventStop{
+			EventCommon: eventCommon,
+		}, nil
+	case "ActiveSensing":
+		return &EventActiveSensing{
+			EventCommon: eventCommon,
+		}, nil
+	case "Meta":
+		return decodeMetaEventFromXML(el, eventCommon)
+	case "Event":
+		unknown, err := parseHexDump(el.SelectAttrValue("unknown", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: unknown=%q", el.SelectAttrValue("unknown", "")))
+		}
+		return &EventUnknown{
+			EventCommon: eventCommon,
+			Unknown:     unknown,
+		}, nil
+	default:
+		return nil, newXMLDecodeError(el, fmt.Errorf("expect an event, but got <%s>", el.Tag))
+	}
 }

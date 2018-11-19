@@ -30,6 +30,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/beevik/etree"
 )
@@ -179,4 +180,28 @@ func DecodeMTrkFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *
 			return
 		}
 	}
+}
+
+func DecodeMTrkFromXML(el *etree.Element) (*MTrk, error) {
+	if el.Tag != "MTrk" {
+		return nil, newXMLDecodeError(el, fmt.Errorf("expect an <MTrk> tag, but got <%s>", el.Tag))
+	}
+	pos, err := strconv.ParseInt(el.SelectAttrValue("pos", "0"), 0, 64)
+	if err != nil {
+		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MTrk tag: pos=%q", el.SelectAttrValue("pos", "")))
+	}
+	events := make([]Event, 0)
+	for _, child := range el.Child {
+		if childEl, ok := child.(*etree.Element); ok {
+			event, err := DecodeEventFromXML(childEl)
+			if err != nil {
+				return nil, err
+			}
+			events = append(events, event)
+		}
+	}
+	return &MTrk{
+		FilePosition: pos,
+		Events:       events,
+	}, nil
 }
