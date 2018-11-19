@@ -32,8 +32,9 @@ import (
 
 type Event interface {
 	Common() *EventCommon
-	Encode(w io.Writer, status, channel *uint8) error
-	EncodeLen(status, channel *uint8) (int64, error)
+	EncodeSMF(w io.Writer, status, channel *uint8) error
+	EncodeSMFLen(status, channel *uint8) (int64, error)
+	EncodeRealtime() ([]byte, error)
 	EncodeXML() *etree.Element
 	Status() uint8
 }
@@ -42,14 +43,15 @@ type MetaEvent interface {
 	Event
 	MetaData() ([]byte, error)
 	MetaLen() (VLQ, error)
-	Type() uint8
+	MetaType() uint8
 }
 
 type MThd struct {
 	FilePosition int64
 	Format       uint16
 	NTrks        uint16
-	Division     int16
+	Framerate    uint8
+	Division     uint16
 	Undecoded    []byte
 	Tracks       []*MTrk
 }
@@ -261,8 +263,15 @@ type MetaEventSetTempo struct {
 // FF 54
 type MetaEventSMPTEOffset struct {
 	EventCommon
-	Timecode  [5]uint8
-	Undecoded []byte
+	Framerate  uint8
+	ColorFrame bool
+	Negative   bool
+	Hours      uint8
+	Minutes    uint8
+	Seconds    uint8
+	Frames     uint8
+	Fractional uint8
+	Undecoded  []byte
 }
 
 // FF 58

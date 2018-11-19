@@ -34,12 +34,12 @@ import (
 	"github.com/beevik/etree"
 )
 
-func (mtrk *MTrk) Encode(w io.Writer) error {
+func (mtrk *MTrk) EncodeSMF(w io.Writer) error {
 	length := int64(0)
 	status := uint8(0)
 	channel := uint8(0)
 	for _, event := range mtrk.Events {
-		appendLength, err := event.EncodeLen(&status, &channel)
+		appendLength, err := event.EncodeSMFLen(&status, &channel)
 		if err != nil {
 			return err
 		}
@@ -59,7 +59,7 @@ func (mtrk *MTrk) Encode(w io.Writer) error {
 	status = uint8(0)
 	channel = uint8(0)
 	for _, event := range mtrk.Events {
-		err = event.Encode(w, &status, &channel)
+		err = event.EncodeSMF(w, &status, &channel)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (mtrk *MTrk) EncodeXML() *etree.Element {
 	return el
 }
 
-func DecodeMTrk(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *MTrk, err error) {
+func DecodeMTrkFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *MTrk, err error) {
 	pos := tell(r)
 	var buf [8]byte
 
@@ -157,7 +157,7 @@ func DecodeMTrk(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *MTrk, e
 		}
 
 		var event Event
-		event, err = DecodeEvent(r, &status, &channel, warningCallback)
+		event, err = DecodeEventFromSMF(r, &status, &channel, warningCallback)
 		if event != nil {
 			mtrk.Events = append(mtrk.Events, event)
 		}

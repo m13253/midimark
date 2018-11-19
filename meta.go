@@ -33,12 +33,29 @@ import (
 	"github.com/beevik/etree"
 )
 
-func (ev *MetaEventSequenceNumber) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventSequenceNumber) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventSequenceNumber) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventSequenceNumber) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventSequenceNumber) EncodeRealtime() ([]byte, error) {
+	return nil, nil
+}
+
+func (ev *MetaEventSequenceNumber) EncodeXML() *etree.Element {
+	el := etree.NewElement("Meta")
+	ev.encodeCommonXMLAttr(el)
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
+	if ev.SequenceNumber != nil {
+		el.CreateAttr("sequence-number", fmt.Sprintf("%d", *ev.SequenceNumber))
+	}
+	if len(ev.Undecoded) != 0 {
+		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
+	}
+	return el
 }
 
 func (ev *MetaEventSequenceNumber) MetaData() ([]byte, error) {
@@ -62,39 +79,30 @@ func (ev *MetaEventSequenceNumber) MetaLen() (VLQ, error) {
 	return VLQ(length), nil
 }
 
-func (ev *MetaEventSequenceNumber) EncodeXML() *etree.Element {
-	el := etree.NewElement("Meta")
-	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
-	if ev.SequenceNumber != nil {
-		el.CreateAttr("sequence-number", fmt.Sprintf("%d", *ev.SequenceNumber))
-	}
-	if len(ev.Undecoded) != 0 {
-		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
-	}
-	return el
-}
-
 func (ev *MetaEventSequenceNumber) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventSequenceNumber) Type() uint8 {
+func (ev *MetaEventSequenceNumber) MetaType() uint8 {
 	return 0x00
 }
 
-func (ev *MetaEventTextEvent) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventTextEvent) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventTextEvent) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventTextEvent) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventTextEvent) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventTextEvent) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -115,22 +123,26 @@ func (ev *MetaEventTextEvent) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventTextEvent) Type() uint8 {
+func (ev *MetaEventTextEvent) MetaType() uint8 {
 	return 0x01
 }
 
-func (ev *MetaEventCopyrightNotice) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventCopyrightNotice) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventCopyrightNotice) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventCopyrightNotice) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventCopyrightNotice) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventCopyrightNotice) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -151,22 +163,26 @@ func (ev *MetaEventCopyrightNotice) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventCopyrightNotice) Type() uint8 {
+func (ev *MetaEventCopyrightNotice) MetaType() uint8 {
 	return 0x02
 }
 
-func (ev *MetaEventSequenceTrackName) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventSequenceTrackName) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventSequenceTrackName) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventSequenceTrackName) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventSequenceTrackName) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventSequenceTrackName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -187,22 +203,26 @@ func (ev *MetaEventSequenceTrackName) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventSequenceTrackName) Type() uint8 {
+func (ev *MetaEventSequenceTrackName) MetaType() uint8 {
 	return 0x03
 }
 
-func (ev *MetaEventInstrumentName) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventInstrumentName) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventInstrumentName) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventInstrumentName) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventInstrumentName) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventInstrumentName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -223,22 +243,26 @@ func (ev *MetaEventInstrumentName) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventInstrumentName) Type() uint8 {
+func (ev *MetaEventInstrumentName) MetaType() uint8 {
 	return 0x04
 }
 
-func (ev *MetaEventLyric) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventLyric) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventLyric) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventLyric) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventLyric) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventLyric) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -259,22 +283,26 @@ func (ev *MetaEventLyric) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventLyric) Type() uint8 {
+func (ev *MetaEventLyric) MetaType() uint8 {
 	return 0x05
 }
 
-func (ev *MetaEventMarker) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventMarker) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventMarker) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventMarker) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventMarker) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventMarker) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -295,22 +323,26 @@ func (ev *MetaEventMarker) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventMarker) Type() uint8 {
+func (ev *MetaEventMarker) MetaType() uint8 {
 	return 0x06
 }
 
-func (ev *MetaEventCuePoint) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventCuePoint) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventCuePoint) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventCuePoint) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventCuePoint) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventCuePoint) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -331,22 +363,26 @@ func (ev *MetaEventCuePoint) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventCuePoint) Type() uint8 {
+func (ev *MetaEventCuePoint) MetaType() uint8 {
 	return 0x07
 }
 
-func (ev *MetaEventProgramName) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventProgramName) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventProgramName) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventProgramName) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventProgramName) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventProgramName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -367,22 +403,26 @@ func (ev *MetaEventProgramName) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventProgramName) Type() uint8 {
+func (ev *MetaEventProgramName) MetaType() uint8 {
 	return 0x08
 }
 
-func (ev *MetaEventDeviceName) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventDeviceName) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventDeviceName) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventDeviceName) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventDeviceName) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventDeviceName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("text", ev.Text)
 	return el
 }
@@ -403,24 +443,28 @@ func (ev *MetaEventDeviceName) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventDeviceName) Type() uint8 {
+func (ev *MetaEventDeviceName) MetaType() uint8 {
 	return 0x09
 }
 
-func (ev *MetaEventMIDIChannelPrefix) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *MetaEventMIDIChannelPrefix) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	ev.Channel = ev.ChannelPrefix
-	return encodeMetaEvent(ev, w, status, channel)
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventMIDIChannelPrefix) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *MetaEventMIDIChannelPrefix) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	ev.Channel = ev.ChannelPrefix
-	return encodeMetaEventLen(ev, status, channel)
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventMIDIChannelPrefix) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventMIDIChannelPrefix) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("channel-prefix", fmt.Sprintf("%d", ev.ChannelPrefix))
 	if len(ev.Undecoded) != 0 {
 		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
@@ -447,22 +491,26 @@ func (ev *MetaEventMIDIChannelPrefix) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventMIDIChannelPrefix) Type() uint8 {
+func (ev *MetaEventMIDIChannelPrefix) MetaType() uint8 {
 	return 0x20
 }
 
-func (ev *MetaEventEndOfTrack) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventEndOfTrack) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventEndOfTrack) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventEndOfTrack) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventEndOfTrack) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventEndOfTrack) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	if len(ev.Undecoded) != 0 {
 		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
 	}
@@ -485,22 +533,26 @@ func (ev *MetaEventEndOfTrack) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventEndOfTrack) Type() uint8 {
+func (ev *MetaEventEndOfTrack) MetaType() uint8 {
 	return 0x2f
 }
 
-func (ev *MetaEventSetTempo) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventSetTempo) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventSetTempo) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventSetTempo) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventSetTempo) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventSetTempo) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("us-per-quarter", fmt.Sprintf("%d", ev.UsPerQuarter))
 	if len(ev.Undecoded) != 0 {
 		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
@@ -530,23 +582,34 @@ func (ev *MetaEventSetTempo) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventSetTempo) Type() uint8 {
+func (ev *MetaEventSetTempo) MetaType() uint8 {
 	return 0x51
 }
 
-func (ev *MetaEventSMPTEOffset) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventSMPTEOffset) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventSMPTEOffset) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventSMPTEOffset) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventSMPTEOffset) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventSMPTEOffset) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
-	el.CreateAttr("timecode", fmt.Sprintf("%d:%d:%d:%d:%d", ev.Timecode[0], ev.Timecode[1], ev.Timecode[2], ev.Timecode[3], ev.Timecode[4]))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
+	if ev.ColorFrame {
+		el.CreateAttr("color-frame", "yes")
+	}
+	if !ev.Negative {
+		el.CreateAttr("timecode", fmt.Sprintf("%02d:%02d:%02d:%02d.%02d", ev.Hours, ev.Minutes, ev.Seconds, ev.Frames, ev.Fractional))
+	} else {
+		el.CreateAttr("timecode", fmt.Sprintf("-%02d:%02d:%02d:%02d.%02d", ev.Hours, ev.Minutes, ev.Seconds, ev.Frames, ev.Fractional))
+	}
 	if len(ev.Undecoded) != 0 {
 		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
 	}
@@ -554,8 +617,29 @@ func (ev *MetaEventSMPTEOffset) EncodeXML() *etree.Element {
 }
 
 func (ev *MetaEventSMPTEOffset) MetaData() ([]byte, error) {
+	timecodeType, ok := map[uint8]uint8{24: 0x00, 25: 0x20, 29: 0x40, 30: 0x60}[ev.Framerate]
+	if !ok {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid SMPTE framerate %d", ev.Framerate))
+	}
+	if ev.Hours >= 32 || ev.Minutes >= 64 || ev.Frames >= 64 {
+		if !ev.Negative {
+			return nil, newSMFEncodeError(ev, fmt.Errorf("invalid SMPTE time code %02d:%02d:%02d:%02d.%02d", ev.Hours, ev.Minutes, ev.Seconds, ev.Frames, ev.Fractional))
+		} else {
+			return nil, newSMFEncodeError(ev, fmt.Errorf("invalid SMPTE time code -%02d:%02d:%02d:%02d.%02d", ev.Hours, ev.Minutes, ev.Seconds, ev.Frames, ev.Fractional))
+		}
+	}
 	data := make([]byte, 5+len(ev.Undecoded))
-	copy(data[:5], ev.Timecode[:])
+	data[0] = timecodeType | ev.Hours
+	data[1] = ev.Minutes
+	if ev.ColorFrame {
+		data[1] |= 0x40
+	}
+	data[2] = ev.Seconds
+	data[3] = ev.Frames
+	if ev.Negative {
+		data[3] |= 0x40
+	}
+	data[4] = ev.Fractional
 	copy(data[5:], ev.Undecoded)
 	return data, nil
 }
@@ -572,22 +656,26 @@ func (ev *MetaEventSMPTEOffset) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventSMPTEOffset) Type() uint8 {
+func (ev *MetaEventSMPTEOffset) MetaType() uint8 {
 	return 0x54
 }
 
-func (ev *MetaEventTimeSignature) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventTimeSignature) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventTimeSignature) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventTimeSignature) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventTimeSignature) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventTimeSignature) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("numerator", fmt.Sprintf("%d", ev.Numerator))
 	el.CreateAttr("denominator", fmt.Sprintf("%d", ev.Numerator))
 	el.CreateAttr("midi-clocks-per-metronome", fmt.Sprintf("%d", ev.MIDIClocksPerMetronome))
@@ -620,22 +708,26 @@ func (ev *MetaEventTimeSignature) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventTimeSignature) Type() uint8 {
+func (ev *MetaEventTimeSignature) MetaType() uint8 {
 	return 0x58
 }
 
-func (ev *MetaEventKeySignature) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventKeySignature) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventKeySignature) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventKeySignature) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventKeySignature) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventKeySignature) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("key-signature", ev.KeySignature.String())
 	if len(ev.Undecoded) != 0 {
 		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
@@ -662,22 +754,26 @@ func (ev *MetaEventKeySignature) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventKeySignature) Type() uint8 {
+func (ev *MetaEventKeySignature) MetaType() uint8 {
 	return 0x59
 }
 
-func (ev *MetaEventXMFPatchTypePrefix) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventXMFPatchTypePrefix) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventXMFPatchTypePrefix) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventXMFPatchTypePrefix) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventXMFPatchTypePrefix) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventXMFPatchTypePrefix) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("param", fmt.Sprintf("%d", ev.Param))
 	if len(ev.Undecoded) != 0 {
 		el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.Undecoded))
@@ -704,22 +800,26 @@ func (ev *MetaEventXMFPatchTypePrefix) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventXMFPatchTypePrefix) Type() uint8 {
+func (ev *MetaEventXMFPatchTypePrefix) MetaType() uint8 {
 	return 0x60
 }
 
-func (ev *MetaEventSequencerSpecific) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventSequencerSpecific) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventSequencerSpecific) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventSequencerSpecific) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventSequencerSpecific) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventSequencerSpecific) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("data", fmt.Sprintf("% x", ev.Data))
 	return el
 }
@@ -740,22 +840,26 @@ func (ev *MetaEventSequencerSpecific) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventSequencerSpecific) Type() uint8 {
+func (ev *MetaEventSequencerSpecific) MetaType() uint8 {
 	return 0x7f
 }
 
-func (ev *MetaEventUnknown) Encode(w io.Writer, status, channel *uint8) error {
-	return encodeMetaEvent(ev, w, status, channel)
+func (ev *MetaEventUnknown) EncodeSMF(w io.Writer, status, channel *uint8) error {
+	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
-func (ev *MetaEventUnknown) EncodeLen(status, channel *uint8) (int64, error) {
-	return encodeMetaEventLen(ev, status, channel)
+func (ev *MetaEventUnknown) EncodeSMFLen(status, channel *uint8) (int64, error) {
+	return encodeMetaEventSMFLen(ev, status, channel)
+}
+
+func (ev *MetaEventUnknown) EncodeRealtime() ([]byte, error) {
+	return nil, nil
 }
 
 func (ev *MetaEventUnknown) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
-	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.Type()))
+	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("undecoded", fmt.Sprintf("% x", ev.RawData))
 	return el
 }
@@ -776,12 +880,12 @@ func (ev *MetaEventUnknown) Status() uint8 {
 	return 0xff
 }
 
-func (ev *MetaEventUnknown) Type() uint8 {
+func (ev *MetaEventUnknown) MetaType() uint8 {
 	return ev.RawType
 }
 
 func decodeMetaEvent(raw *MetaEventUnknown, warningCallback WarningCallback) Event {
-	switch raw.Type() {
+	switch raw.MetaType() {
 	case 0x00:
 		if len(raw.RawData) == 0 {
 			return &MetaEventSequenceNumber{
@@ -877,9 +981,16 @@ func decodeMetaEvent(raw *MetaEventUnknown, warningCallback WarningCallback) Eve
 		}
 		event := &MetaEventSMPTEOffset{
 			EventCommon: raw.EventCommon,
+			Framerate:   map[uint8]uint8{0x00: 24, 0x20: 25, 0x40: 29, 0x60: 30}[raw.RawData[0]&0x60],
+			Hours:       raw.RawData[0] & 0x1f,
+			ColorFrame:  (raw.RawData[1] & 0x40) != 0,
+			Minutes:     raw.RawData[1] & 0x3f,
+			Seconds:     raw.RawData[2] & 0x7f,
+			Negative:    (raw.RawData[3] & 0x40) != 0,
+			Frames:      raw.RawData[3] & 0x3f,
+			Fractional:  raw.RawData[4] & 0x7f,
 			Undecoded:   raw.RawData[5:],
 		}
-		copy(event.Timecode[:], raw.RawData[:5])
 		return event
 	case 0x58:
 		if len(raw.RawData) < 4 {
@@ -925,7 +1036,7 @@ func decodeMetaEvent(raw *MetaEventUnknown, warningCallback WarningCallback) Eve
 	}
 }
 
-func encodeMetaEvent(ev MetaEvent, w io.Writer, status, channel *uint8) error {
+func encodeMetaEventSMF(ev MetaEvent, w io.Writer, status, channel *uint8) error {
 	evCommon := ev.Common()
 	err := evCommon.DeltaTick.Encode(w)
 	if err != nil {
@@ -939,7 +1050,7 @@ func encodeMetaEvent(ev MetaEvent, w io.Writer, status, channel *uint8) error {
 			return err
 		}
 	}
-	_, err = w.Write([]byte{ev.Status(), ev.Type()})
+	_, err = w.Write([]byte{ev.Status(), ev.MetaType()})
 	if err != nil {
 		return err
 	}
@@ -959,7 +1070,7 @@ func encodeMetaEvent(ev MetaEvent, w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func encodeMetaEventLen(ev MetaEvent, status, channel *uint8) (int64, error) {
+func encodeMetaEventSMFLen(ev MetaEvent, status, channel *uint8) (int64, error) {
 	evCommon := ev.Common()
 	length, err := evCommon.DeltaTick.EncodeLen()
 	if err != nil {

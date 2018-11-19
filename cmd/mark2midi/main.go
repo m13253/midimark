@@ -72,7 +72,7 @@ func main() {
 	}
 	w := bufio.NewWriter(output)
 	defer w.Flush()
-	err = sequence.Encode(w)
+	err = sequence.EncodeSMF(w)
 	if err != nil {
 		log.Fatalln(err)
 	}

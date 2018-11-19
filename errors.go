@@ -26,6 +26,8 @@ package midimark
 
 import (
 	"fmt"
+
+	"github.com/beevik/etree"
 )
 
 type WarningCallback func(err error)
@@ -39,6 +41,11 @@ type ErrSMFEncode struct {
 
 type ErrSMFDecode struct {
 	Pos int64
+	Err error
+}
+
+type ErrXMLDecode struct {
+	Obj etree.Token
 	Err error
 }
 
@@ -56,6 +63,13 @@ func newSMFDecodeError(pos int64, err error) *ErrSMFDecode {
 	}
 }
 
+func newXMLDecodeError(Obj etree.Token, err error) *ErrXMLDecode {
+	return &ErrXMLDecode{
+		Obj: Obj,
+		Err: err,
+	}
+}
+
 func (e *ErrSMFEncode) Error() string {
 	return fmt.Sprintf("MIDI encode error: %v", e.Err)
 }
@@ -65,4 +79,8 @@ func (e *ErrSMFDecode) Error() string {
 		return fmt.Sprintf("MIDI decode error: %v", e.Err)
 	}
 	return fmt.Sprintf("MIDI decode error at %#x: %v", e.Pos, e.Err)
+}
+
+func (e *ErrXMLDecode) Error() string {
+	return fmt.Sprintf("MIDI Markup decode error: %v", e.Err)
 }

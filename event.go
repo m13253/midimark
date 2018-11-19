@@ -41,7 +41,7 @@ func (ev *EventCommon) encodeCommonXMLAttr(el *etree.Element) {
 	}
 }
 
-func (ev *EventNoteOff) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventNoteOff) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -65,7 +65,7 @@ func (ev *EventNoteOff) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventNoteOff) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventNoteOff) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -87,6 +87,19 @@ func (ev *EventNoteOff) EncodeLen(status, channel *uint8) (int64, error) {
 		length += 3
 	}
 	return length, nil
+}
+
+func (ev *EventNoteOff) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
+	}
+	if ev.Key >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid key code %d", ev.Key))
+	}
+	if ev.Velocity >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
+	}
+	return []byte{ev.Status(), uint8(ev.Key), ev.Velocity}, nil
 }
 
 func (ev *EventNoteOff) EncodeXML() *etree.Element {
@@ -101,7 +114,7 @@ func (ev *EventNoteOff) Status() uint8 {
 	return 0x80 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventNoteOn) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventNoteOn) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -125,7 +138,7 @@ func (ev *EventNoteOn) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventNoteOn) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventNoteOn) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -147,6 +160,19 @@ func (ev *EventNoteOn) EncodeLen(status, channel *uint8) (int64, error) {
 		length += 3
 	}
 	return length, nil
+}
+
+func (ev *EventNoteOn) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
+	}
+	if ev.Key >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid key code %d", ev.Key))
+	}
+	if ev.Velocity >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
+	}
+	return []byte{ev.Status(), uint8(ev.Key), ev.Velocity}, nil
 }
 
 func (ev *EventNoteOn) EncodeXML() *etree.Element {
@@ -161,7 +187,7 @@ func (ev *EventNoteOn) Status() uint8 {
 	return 0x90 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventPolyphonicKeyPressure) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventPolyphonicKeyPressure) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -185,7 +211,7 @@ func (ev *EventPolyphonicKeyPressure) Encode(w io.Writer, status, channel *uint8
 	return err
 }
 
-func (ev *EventPolyphonicKeyPressure) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventPolyphonicKeyPressure) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -209,6 +235,19 @@ func (ev *EventPolyphonicKeyPressure) EncodeLen(status, channel *uint8) (int64, 
 	return length, nil
 }
 
+func (ev *EventPolyphonicKeyPressure) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
+	}
+	if ev.Key >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid key code %d", ev.Key))
+	}
+	if ev.Velocity >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
+	}
+	return []byte{ev.Status(), uint8(ev.Key), ev.Velocity}, nil
+}
+
 func (ev *EventPolyphonicKeyPressure) EncodeXML() *etree.Element {
 	el := etree.NewElement("KeyPressure")
 	ev.encodeCommonXMLAttr(el)
@@ -221,7 +260,7 @@ func (ev *EventPolyphonicKeyPressure) Status() uint8 {
 	return 0xa0 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventControlChange) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventControlChange) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -245,7 +284,7 @@ func (ev *EventControlChange) Encode(w io.Writer, status, channel *uint8) error 
 	return err
 }
 
-func (ev *EventControlChange) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventControlChange) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -269,6 +308,19 @@ func (ev *EventControlChange) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventControlChange) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
+	}
+	if ev.Control >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid control type %d", ev.Control))
+	}
+	if ev.Value >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid control value %d", ev.Value))
+	}
+	return []byte{ev.Status(), ev.Control, ev.Value}, nil
+}
+
 func (ev *EventControlChange) EncodeXML() *etree.Element {
 	el := etree.NewElement("ControlChange")
 	ev.encodeCommonXMLAttr(el)
@@ -281,7 +333,7 @@ func (ev *EventControlChange) Status() uint8 {
 	return 0xb0 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventProgramChange) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventProgramChange) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -302,7 +354,7 @@ func (ev *EventProgramChange) Encode(w io.Writer, status, channel *uint8) error 
 	return err
 }
 
-func (ev *EventProgramChange) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventProgramChange) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -323,6 +375,16 @@ func (ev *EventProgramChange) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventProgramChange) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
+	}
+	if ev.Program >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid program value %d", ev.Program))
+	}
+	return []byte{ev.Status(), ev.Program - 1}, nil
+}
+
 func (ev *EventProgramChange) EncodeXML() *etree.Element {
 	el := etree.NewElement("NoteOff")
 	ev.encodeCommonXMLAttr(el)
@@ -334,7 +396,7 @@ func (ev *EventProgramChange) Status() uint8 {
 	return 0xc0 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventChannelPressure) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventChannelPressure) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -355,7 +417,7 @@ func (ev *EventChannelPressure) Encode(w io.Writer, status, channel *uint8) erro
 	return err
 }
 
-func (ev *EventChannelPressure) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventChannelPressure) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -376,6 +438,16 @@ func (ev *EventChannelPressure) EncodeLen(status, channel *uint8) (int64, error)
 	return length, nil
 }
 
+func (ev *EventChannelPressure) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
+	}
+	if ev.Velocity >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
+	}
+	return []byte{ev.Status(), ev.Velocity}, nil
+}
+
 func (ev *EventChannelPressure) EncodeXML() *etree.Element {
 	el := etree.NewElement("ChannelPressure")
 	ev.encodeCommonXMLAttr(el)
@@ -387,7 +459,7 @@ func (ev *EventChannelPressure) Status() uint8 {
 	return 0xd0 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventPitchWheelChange) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventPitchWheelChange) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.Channel-1 >= 16 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel))
 	}
@@ -408,7 +480,7 @@ func (ev *EventPitchWheelChange) Encode(w io.Writer, status, channel *uint8) err
 	return err
 }
 
-func (ev *EventPitchWheelChange) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventPitchWheelChange) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.Channel-1 >= 16 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
 	}
@@ -429,6 +501,16 @@ func (ev *EventPitchWheelChange) EncodeLen(status, channel *uint8) (int64, error
 	return length, nil
 }
 
+func (ev *EventPitchWheelChange) EncodeRealtime() ([]byte, error) {
+	if ev.Channel-1 >= 16 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid MIDI channel %d", ev.Channel-1))
+	}
+	if ev.Pitch >= 0x2000 || ev.Pitch < -0x2000 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid pitch value %d", ev.Pitch))
+	}
+	return []byte{ev.Status(), uint8((ev.Pitch+0x2000)>>7) & 0x7f, uint8(ev.Pitch+0x2000) & 0x7f}, nil
+}
+
 func (ev *EventPitchWheelChange) EncodeXML() *etree.Element {
 	el := etree.NewElement("PitchWheel")
 	ev.encodeCommonXMLAttr(el)
@@ -440,7 +522,7 @@ func (ev *EventPitchWheelChange) Status() uint8 {
 	return 0xe0 | (ev.Channel - 1&0x0f)
 }
 
-func (ev *EventSystemExclusive) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventSystemExclusive) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -491,7 +573,7 @@ func (ev *EventSystemExclusive) Encode(w io.Writer, status, channel *uint8) erro
 	return nil
 }
 
-func (ev *EventSystemExclusive) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventSystemExclusive) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -529,6 +611,13 @@ func (ev *EventSystemExclusive) EncodeLen(status, channel *uint8) (int64, error)
 	return length, nil
 }
 
+func (ev *EventSystemExclusive) EncodeRealtime() ([]byte, error) {
+	data := make([]byte, len(ev.Data)+1)
+	data[0] = ev.Status()
+	copy(data[1:], ev.Data)
+	return data, nil
+}
+
 func (ev *EventSystemExclusive) EncodeXML() *etree.Element {
 	el := etree.NewElement("SysEx")
 	ev.encodeCommonXMLAttr(el)
@@ -540,7 +629,7 @@ func (ev *EventSystemExclusive) Status() uint8 {
 	return 0xf0
 }
 
-func (ev *EventTimeCodeQuarterFrame) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventTimeCodeQuarterFrame) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.MessageType >= 0x8 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid message type %d", ev.MessageType))
 	}
@@ -563,7 +652,7 @@ func (ev *EventTimeCodeQuarterFrame) Encode(w io.Writer, status, channel *uint8)
 	return err
 }
 
-func (ev *EventTimeCodeQuarterFrame) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventTimeCodeQuarterFrame) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.MessageType >= 0x8 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid message type %d", ev.MessageType))
 	}
@@ -583,6 +672,16 @@ func (ev *EventTimeCodeQuarterFrame) EncodeLen(status, channel *uint8) (int64, e
 	return length, nil
 }
 
+func (ev *EventTimeCodeQuarterFrame) EncodeRealtime() ([]byte, error) {
+	if ev.MessageType >= 0x8 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid message type %d", ev.MessageType))
+	}
+	if ev.Values >= 0x10 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid time code quarter frame value %d", ev.Values))
+	}
+	return []byte{ev.Status(), ev.MessageType<<4 | ev.Values}, nil
+}
+
 func (ev *EventTimeCodeQuarterFrame) EncodeXML() *etree.Element {
 	el := etree.NewElement("TimeCodeQuarterFrame")
 	ev.encodeCommonXMLAttr(el)
@@ -595,7 +694,7 @@ func (ev *EventTimeCodeQuarterFrame) Status() uint8 {
 	return 0xf1
 }
 
-func (ev *EventSongPositionPointer) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventSongPositionPointer) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.SongPosition >= 0x4000 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid song position %d", ev.SongPosition))
 	}
@@ -615,7 +714,7 @@ func (ev *EventSongPositionPointer) Encode(w io.Writer, status, channel *uint8) 
 	return err
 }
 
-func (ev *EventSongPositionPointer) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventSongPositionPointer) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.SongPosition >= 0x4000 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid song position %d", ev.SongPosition))
 	}
@@ -639,11 +738,18 @@ func (ev *EventSongPositionPointer) EncodeXML() *etree.Element {
 	return el
 }
 
+func (ev *EventSongPositionPointer) EncodeRealtime() ([]byte, error) {
+	if ev.SongPosition >= 0x4000 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid song position %d", ev.SongPosition))
+	}
+	return []byte{ev.Status(), uint8(ev.SongPosition>>7) & 0x7f, uint8(ev.SongPosition) & 0x7f}, nil
+}
+
 func (ev *EventSongPositionPointer) Status() uint8 {
 	return 0xf2
 }
 
-func (ev *EventSongSelect) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventSongSelect) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if ev.SongNumber >= 0x80 {
 		return newSMFEncodeError(ev, fmt.Errorf("invalid song number %d", ev.SongNumber))
 	}
@@ -663,7 +769,7 @@ func (ev *EventSongSelect) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventSongSelect) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventSongSelect) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if ev.SongNumber >= 0x80 {
 		return 0, newSMFEncodeError(ev, fmt.Errorf("invalid song number %d", ev.SongNumber))
 	}
@@ -680,6 +786,13 @@ func (ev *EventSongSelect) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventSongSelect) EncodeRealtime() ([]byte, error) {
+	if ev.SongNumber >= 0x80 {
+		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid song number %d", ev.SongNumber))
+	}
+	return []byte{ev.Status(), ev.SongNumber & 0x7f}, nil
+}
+
 func (ev *EventSongSelect) EncodeXML() *etree.Element {
 	el := etree.NewElement("SongSelect")
 	ev.encodeCommonXMLAttr(el)
@@ -691,7 +804,7 @@ func (ev *EventSongSelect) Status() uint8 {
 	return 0xf3
 }
 
-func (ev *EventTuneRequest) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventTuneRequest) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -708,7 +821,7 @@ func (ev *EventTuneRequest) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventTuneRequest) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventTuneRequest) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -722,6 +835,10 @@ func (ev *EventTuneRequest) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventTuneRequest) EncodeRealtime() ([]byte, error) {
+	return []byte{ev.Status()}, nil
+}
+
 func (ev *EventTuneRequest) EncodeXML() *etree.Element {
 	el := etree.NewElement("TuneRequest")
 	ev.encodeCommonXMLAttr(el)
@@ -732,7 +849,7 @@ func (ev *EventTuneRequest) Status() uint8 {
 	return 0xf6
 }
 
-func (ev *EventEscape) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventEscape) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -782,7 +899,7 @@ func (ev *EventEscape) Encode(w io.Writer, status, channel *uint8) error {
 	return nil
 }
 
-func (ev *EventEscape) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventEscape) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -819,6 +936,10 @@ func (ev *EventEscape) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventEscape) EncodeRealtime() ([]byte, error) {
+	return ev.Data, nil
+}
+
 func (ev *EventEscape) EncodeXML() *etree.Element {
 	el := etree.NewElement("Escape")
 	ev.encodeCommonXMLAttr(el)
@@ -830,7 +951,7 @@ func (ev *EventEscape) Status() uint8 {
 	return 0xf7
 }
 
-func (ev *EventTimingClock) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventTimingClock) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -847,7 +968,7 @@ func (ev *EventTimingClock) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventTimingClock) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventTimingClock) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -859,6 +980,10 @@ func (ev *EventTimingClock) EncodeLen(status, channel *uint8) (int64, error) {
 	}
 	length++
 	return length, nil
+}
+
+func (ev *EventTimingClock) EncodeRealtime() ([]byte, error) {
+	return []byte{ev.Status()}, nil
 }
 
 func (ev *EventTimingClock) EncodeXML() *etree.Element {
@@ -871,7 +996,7 @@ func (ev *EventTimingClock) Status() uint8 {
 	return 0xf8
 }
 
-func (ev *EventStart) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventStart) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -888,7 +1013,7 @@ func (ev *EventStart) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventStart) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventStart) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -902,6 +1027,10 @@ func (ev *EventStart) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventStart) EncodeRealtime() ([]byte, error) {
+	return []byte{ev.Status()}, nil
+}
+
 func (ev *EventStart) EncodeXML() *etree.Element {
 	el := etree.NewElement("Start")
 	ev.encodeCommonXMLAttr(el)
@@ -912,7 +1041,7 @@ func (ev *EventStart) Status() uint8 {
 	return 0xfa
 }
 
-func (ev *EventContinue) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventContinue) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -929,7 +1058,7 @@ func (ev *EventContinue) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventContinue) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventContinue) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -949,11 +1078,15 @@ func (ev *EventContinue) EncodeXML() *etree.Element {
 	return el
 }
 
+func (ev *EventContinue) EncodeRealtime() ([]byte, error) {
+	return []byte{ev.Status()}, nil
+}
+
 func (ev *EventContinue) Status() uint8 {
 	return 0xfb
 }
 
-func (ev *EventStop) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventStop) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -970,7 +1103,7 @@ func (ev *EventStop) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventStop) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventStop) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -982,6 +1115,10 @@ func (ev *EventStop) EncodeLen(status, channel *uint8) (int64, error) {
 	}
 	length++
 	return length, nil
+}
+
+func (ev *EventStop) EncodeRealtime() ([]byte, error) {
+	return []byte{ev.Status()}, nil
 }
 
 func (ev *EventStop) EncodeXML() *etree.Element {
@@ -994,7 +1131,7 @@ func (ev *EventStop) Status() uint8 {
 	return 0xfc
 }
 
-func (ev *EventActiveSensing) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventActiveSensing) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	err := ev.DeltaTick.Encode(w)
 	if err != nil {
 		return err
@@ -1011,7 +1148,7 @@ func (ev *EventActiveSensing) Encode(w io.Writer, status, channel *uint8) error 
 	return err
 }
 
-func (ev *EventActiveSensing) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventActiveSensing) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	length, err := ev.DeltaTick.EncodeLen()
 	if err != nil {
 		return 0, err
@@ -1025,6 +1162,10 @@ func (ev *EventActiveSensing) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, nil
 }
 
+func (ev *EventActiveSensing) EncodeRealtime() ([]byte, error) {
+	return []byte{ev.Status()}, nil
+}
+
 func (ev *EventActiveSensing) EncodeXML() *etree.Element {
 	el := etree.NewElement("ActiveSensing")
 	ev.encodeCommonXMLAttr(el)
@@ -1035,7 +1176,7 @@ func (ev *EventActiveSensing) Status() uint8 {
 	return 0xfe
 }
 
-func (ev *EventUnknown) Encode(w io.Writer, status, channel *uint8) error {
+func (ev *EventUnknown) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	if len(ev.RawData) == 0 {
 		return nil
 	}
@@ -1069,7 +1210,7 @@ func (ev *EventUnknown) Encode(w io.Writer, status, channel *uint8) error {
 	return err
 }
 
-func (ev *EventUnknown) EncodeLen(status, channel *uint8) (int64, error) {
+func (ev *EventUnknown) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	if len(ev.RawData) == 0 {
 		return 0, nil
 	}
@@ -1100,6 +1241,10 @@ func (ev *EventUnknown) EncodeLen(status, channel *uint8) (int64, error) {
 	return length, err
 }
 
+func (ev *EventUnknown) EncodeRealtime() ([]byte, error) {
+	return ev.RawData, nil
+}
+
 func (ev *EventUnknown) EncodeXML() *etree.Element {
 	el := etree.NewElement("Event")
 	ev.encodeCommonXMLAttr(el)
@@ -1117,7 +1262,7 @@ func (ev *EventUnknown) Status() uint8 {
 	return ev.RawData[0]
 }
 
-func DecodeEvent(r io.ReadSeeker, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
+func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
 	pos := tell(r)
 
 	var delta VLQ
