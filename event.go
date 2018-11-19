@@ -57,11 +57,11 @@ func (ev *EventNoteOff) EncodeSMF(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	if *status == ev.Status() {
-		_, err = w.Write([]byte{uint8(ev.Key), ev.Velocity})
+		_, err = w.Write([]byte{uint8(ev.Key), ev.encodeVelocity()})
 	} else {
 		*status = ev.Status()
 		*channel = ev.Channel
-		_, err = w.Write([]byte{ev.Status(), uint8(ev.Key), ev.Velocity})
+		_, err = w.Write([]byte{ev.Status(), uint8(ev.Key), ev.encodeVelocity()})
 	}
 	return err
 }
@@ -100,7 +100,7 @@ func (ev *EventNoteOff) EncodeRealtime() ([]byte, error) {
 	if ev.Velocity >= 0x80 {
 		return nil, newSMFEncodeError(ev, fmt.Errorf("invalid velocity value %d", ev.Velocity))
 	}
-	return []byte{ev.Status(), uint8(ev.Key), ev.Velocity}, nil
+	return []byte{ev.Status(), uint8(ev.Key), ev.encodeVelocity()}, nil
 }
 
 func (ev *EventNoteOff) EncodeXML() *etree.Element {
@@ -111,7 +111,17 @@ func (ev *EventNoteOff) EncodeXML() *etree.Element {
 	return el
 }
 
+func (ev *EventNoteOff) encodeVelocity() uint8 {
+	if ev.Velocity == 64 {
+		return 0
+	}
+	return ev.Velocity
+}
+
 func (ev *EventNoteOff) Status() uint8 {
+	if ev.Velocity == 64 {
+		return 0x90 | (ev.Channel - 1&0x0f)
+	}
 	return 0x80 | (ev.Channel - 1&0x0f)
 }
 
@@ -1332,10 +1342,18 @@ func decodeEvent(r io.ReadSeeker, realtime bool, status, channel *uint8, warning
 		if buf[1] >= 0x80 || buf[2] >= 0x80 {
 			warningCallback(newSMFDecodeError(pos, fmt.Errorf("invalid MIDI event % x", buf[:3])))
 		}
-		event = &EventNoteOn{
-			EventCommon: eventCommon,
-			Key:         Key(buf[1] & 0x7f),
-			Velocity:    buf[2] & 0x7f,
+		if buf[2]&0x7f != 0 {
+			event = &EventNoteOn{
+				EventCommon: eventCommon,
+				Key:         Key(buf[1] & 0x7f),
+				Velocity:    buf[2] & 0x7f,
+			}
+		} else {
+			event = &EventNoteOff{
+				EventCommon: eventCommon,
+				Key:         Key(buf[1] & 0x7f),
+				Velocity:    64,
+			}
 		}
 	case 0xa0:
 		_, err = io.ReadFull(r, buf[1:3])

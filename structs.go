@@ -73,7 +73,7 @@ type EventNoteOff struct {
 	EventCommon
 	Key           Key
 	Velocity      uint8
-	RelatedNoteOn Event
+	RelatedNoteOn *EventNoteOff
 }
 
 // 9n
@@ -81,8 +81,7 @@ type EventNoteOn struct {
 	EventCommon
 	Key            Key
 	Velocity       uint8
-	RelatedNoteOn  Event
-	RelatedNoteOff Event
+	RelatedNoteOff *EventNoteOn
 }
 
 // An
@@ -90,7 +89,7 @@ type EventPolyphonicKeyPressure struct {
 	EventCommon
 	Key           Key
 	Velocity      uint8
-	RelatedNoteOn Event
+	RelatedNoteOn []*EventNoteOn
 }
 
 // Bn

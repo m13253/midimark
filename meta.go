@@ -29,7 +29,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 
@@ -1288,7 +1287,6 @@ func encodeMetaEventSMF(ev MetaEvent, w io.Writer, status, channel *uint8) error
 	}
 	*status = ev.Status()
 	if evCommon.Channel-1 < 16 && *channel != evCommon.Channel {
-		log.Printf("*channel was %d, but evCommon.Channel is %d\n", *channel, evCommon.Channel)
 		*channel = evCommon.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, evCommon.Channel - 1, 0x00})
 		if err != nil {
