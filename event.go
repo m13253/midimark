@@ -528,7 +528,7 @@ func (ev *EventSystemExclusive) EncodeSMF(w io.Writer, status, channel *uint8) e
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -579,7 +579,7 @@ func (ev *EventSystemExclusive) EncodeSMFLen(status, channel *uint8) (int64, err
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -641,7 +641,7 @@ func (ev *EventTimeCodeQuarterFrame) EncodeSMF(w io.Writer, status, channel *uin
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -664,7 +664,7 @@ func (ev *EventTimeCodeQuarterFrame) EncodeSMFLen(status, channel *uint8) (int64
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -703,7 +703,7 @@ func (ev *EventSongPositionPointer) EncodeSMF(w io.Writer, status, channel *uint
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -723,7 +723,7 @@ func (ev *EventSongPositionPointer) EncodeSMFLen(status, channel *uint8) (int64,
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -758,7 +758,7 @@ func (ev *EventSongSelect) EncodeSMF(w io.Writer, status, channel *uint8) error 
 		return err
 	}
 	*status = 0xf3
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -778,7 +778,7 @@ func (ev *EventSongSelect) EncodeSMFLen(status, channel *uint8) (int64, error) {
 		return 0, err
 	}
 	*status = 0xf3
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -810,7 +810,7 @@ func (ev *EventTuneRequest) EncodeSMF(w io.Writer, status, channel *uint8) error
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -827,7 +827,7 @@ func (ev *EventTuneRequest) EncodeSMFLen(status, channel *uint8) (int64, error) 
 		return 0, err
 	}
 	*status = 0xf6
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -855,7 +855,7 @@ func (ev *EventEscape) EncodeSMF(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -905,7 +905,7 @@ func (ev *EventEscape) EncodeSMFLen(status, channel *uint8) (int64, error) {
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -957,7 +957,7 @@ func (ev *EventTimingClock) EncodeSMF(w io.Writer, status, channel *uint8) error
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -974,7 +974,7 @@ func (ev *EventTimingClock) EncodeSMFLen(status, channel *uint8) (int64, error) 
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -1002,7 +1002,7 @@ func (ev *EventStart) EncodeSMF(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -1019,7 +1019,7 @@ func (ev *EventStart) EncodeSMFLen(status, channel *uint8) (int64, error) {
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -1047,7 +1047,7 @@ func (ev *EventContinue) EncodeSMF(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -1064,7 +1064,7 @@ func (ev *EventContinue) EncodeSMFLen(status, channel *uint8) (int64, error) {
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -1092,7 +1092,7 @@ func (ev *EventStop) EncodeSMF(w io.Writer, status, channel *uint8) error {
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -1109,7 +1109,7 @@ func (ev *EventStop) EncodeSMFLen(status, channel *uint8) (int64, error) {
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -1137,7 +1137,7 @@ func (ev *EventActiveSensing) EncodeSMF(w io.Writer, status, channel *uint8) err
 		return err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 		if err != nil {
@@ -1154,7 +1154,7 @@ func (ev *EventActiveSensing) EncodeSMFLen(status, channel *uint8) (int64, error
 		return 0, err
 	}
 	*status = ev.Status()
-	if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+	if ev.Channel-1 < 16 && *channel != ev.Channel {
 		*channel = ev.Channel
 		length += 5
 	}
@@ -1198,7 +1198,7 @@ func (ev *EventUnknown) EncodeSMF(w io.Writer, status, channel *uint8) error {
 		}
 	} else {
 		*status = ev.Status()
-		if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+		if ev.Channel-1 < 16 && *channel != ev.Channel {
 			*channel = ev.Channel
 			_, err = w.Write([]byte{0xff, 0x20, 0x01, ev.Channel - 1, 0x00})
 			if err != nil {
@@ -1232,7 +1232,7 @@ func (ev *EventUnknown) EncodeSMFLen(status, channel *uint8) (int64, error) {
 		}
 	} else {
 		*status = ev.Status()
-		if ev.Channel-1 < 16 && *channel-1 != ev.Channel-1 {
+		if ev.Channel-1 < 16 && *channel != ev.Channel {
 			*channel = ev.Channel
 			length += 5
 		}
@@ -1579,6 +1579,7 @@ func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback
 	return decodeEvent(r, false, status, channel, warningCallback)
 }
 
-func DecodeEventFromRealtime(r io.ReadSeeker, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
-	return decodeEvent(r, true, status, channel, warningCallback)
+func DecodeEventFromRealtime(r io.ReadSeeker, status *uint8, warningCallback WarningCallback) (event Event, err error) {
+	channel := uint8(0)
+	return decodeEvent(r, true, status, &channel, warningCallback)
 }
