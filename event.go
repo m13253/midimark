@@ -1301,10 +1301,9 @@ func decodeEvent(r io.ReadSeeker, realtime bool, status, channel *uint8, warning
 		if err != nil {
 			return
 		}
-	} else {
-		*status = buf[0]
 	}
-	if *status < 0xf0 {
+	if buf[0] < 0xf0 {
+		*status = buf[0]
 		*channel = (*status & 0x0f) + 1
 	}
 

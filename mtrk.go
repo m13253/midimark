@@ -118,6 +118,8 @@ func DecodeMTrkFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mtrk *
 	status := uint8(0x80)
 	channel := uint8(0)
 
+	defer mtrk.ConvertDeltaToAbsTick()
+
 	// Strangely there are wild MIDI files with MTrk length == 0
 	if length == 0 {
 		warningCallback(newSMFDecodeError(pos+4, errors.New("MIDI track seems to contain no events")))
