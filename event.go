@@ -1262,13 +1262,15 @@ func (ev *EventUnknown) Status() uint8 {
 	return ev.RawData[0]
 }
 
-func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
+func decodeEvent(r io.ReadSeeker, realtime bool, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
 	pos := tell(r)
 
 	var delta VLQ
-	delta, err = DecodeVLQ(r, warningCallback)
-	if err != nil {
-		return
+	if !realtime {
+		delta, err = DecodeVLQ(r, warningCallback)
+		if err != nil {
+			return
+		}
 	}
 
 	var buf [3]byte
@@ -1480,6 +1482,13 @@ func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback
 				EventCommon: eventCommon,
 			}
 		case 0xf7:
+			if realtime {
+				return &EventEscape{
+					EventCommon: eventCommon,
+					Data:        []byte{0xf7},
+				}, nil
+			}
+
 			var length VLQ
 			length, err = DecodeVLQ(r, warningCallback)
 			if err != nil {
@@ -1518,6 +1527,13 @@ func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback
 				EventCommon: eventCommon,
 			}
 		case 0xff:
+			if realtime {
+				return &EventEscape{
+					EventCommon: eventCommon,
+					Data:        []byte{0xff},
+				}, nil
+			}
+
 			_, err = io.ReadFull(r, buf[1:2])
 			if err != nil {
 				if err == io.EOF {
@@ -1557,4 +1573,12 @@ func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback
 		}
 	}
 	return
+}
+
+func DecodeEventFromSMF(r io.ReadSeeker, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
+	return decodeEvent(r, false, status, channel, warningCallback)
+}
+
+func DecodeEventFromRealtime(r io.ReadSeeker, status, channel *uint8, warningCallback WarningCallback) (event Event, err error) {
+	return decodeEvent(r, true, status, channel, warningCallback)
 }
