@@ -29,6 +29,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"strings"
 
@@ -451,11 +452,13 @@ func (ev *MetaEventDeviceName) MetaType() uint8 {
 
 func (ev *MetaEventMIDIChannelPrefix) EncodeSMF(w io.Writer, status, channel *uint8) error {
 	ev.Channel = ev.ChannelPrefix
+	*channel = ev.Channel
 	return encodeMetaEventSMF(ev, w, status, channel)
 }
 
 func (ev *MetaEventMIDIChannelPrefix) EncodeSMFLen(status, channel *uint8) (int64, error) {
 	ev.Channel = ev.ChannelPrefix
+	*channel = ev.Channel
 	return encodeMetaEventSMFLen(ev, status, channel)
 }
 
@@ -476,7 +479,7 @@ func (ev *MetaEventMIDIChannelPrefix) EncodeXML() *etree.Element {
 
 func (ev *MetaEventMIDIChannelPrefix) MetaData() ([]byte, error) {
 	data := make([]byte, 1+len(ev.Undecoded))
-	data[0] = ev.ChannelPrefix
+	data[0] = ev.ChannelPrefix - 1
 	copy(data[1:], ev.Undecoded)
 	return data, nil
 }
@@ -604,6 +607,7 @@ func (ev *MetaEventSMPTEOffset) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
+	el.CreateAttr("framerate", fmt.Sprintf("%d", ev.Framerate))
 	if ev.ColorFrame {
 		el.CreateAttr("color-frame", "yes")
 	}
@@ -1133,6 +1137,15 @@ func decodeMetaEventFromXML(el *etree.Element, eventCommon EventCommon) (Event, 
 			ChannelPrefix: eventCommon.Channel,
 			Undecoded:     undecoded,
 		}, nil
+	case 0x2f:
+		undecoded, err := parseHexDump(el.SelectAttrValue("undecoded", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: undecoded=%q", metaType, el.SelectAttrValue("undecoded", "")))
+		}
+		return &MetaEventEndOfTrack{
+			EventCommon: eventCommon,
+			Undecoded:   undecoded,
+		}, nil
 	case 0x51:
 		usPerQuarter, err := strconv.ParseUint(el.SelectAttrValue("us-per-quarter", ""), 0, 32)
 		if err != nil {
@@ -1256,7 +1269,7 @@ func decodeMetaEventFromXML(el *etree.Element, eventCommon EventCommon) (Event, 
 			Data:        data,
 		}, nil
 	default:
-		unknown, err := parseHexDump(el.SelectAttrValue("unknown", ""))
+		unknown, err := parseHexDump(el.SelectAttrValue("unknown", "unknown"))
 		if err != nil {
 			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta event: type=%q", el.SelectAttrValue("type", "")))
 		}
@@ -1275,8 +1288,9 @@ func encodeMetaEventSMF(ev MetaEvent, w io.Writer, status, channel *uint8) error
 	}
 	*status = ev.Status()
 	if evCommon.Channel-1 < 16 && *channel != evCommon.Channel {
+		log.Printf("*channel was %d, but evCommon.Channel is %d\n", *channel, evCommon.Channel)
 		*channel = evCommon.Channel
-		_, err = w.Write([]byte{0xff, 0x20, 0x01, evCommon.Channel, 0x00})
+		_, err = w.Write([]byte{0xff, 0x20, 0x01, evCommon.Channel - 1, 0x00})
 		if err != nil {
 			return err
 		}

@@ -84,6 +84,7 @@ func (mthd *MThd) EncodeXML() *etree.Element {
 	el.CreateAttr("pos", fmt.Sprintf("%#x", mthd.FilePosition))
 	el.CreateAttr("format", fmt.Sprintf("%d", mthd.Format))
 	el.CreateAttr("ntrks", fmt.Sprintf("%d", mthd.NTrks))
+	el.CreateAttr("framerate", fmt.Sprintf("%d", mthd.Framerate))
 	el.CreateAttr("division", fmt.Sprintf("%d", mthd.Division))
 	for _, mtrk := range mthd.Tracks {
 		el.AddChild(mtrk.EncodeXML())
@@ -95,7 +96,7 @@ func (mthd *MThd) EncodeXMLToDocument(w io.Writer) (n int64, err error) {
 	doc := etree.NewDocument()
 	el := mthd.EncodeXML()
 	doc.AddChild(el)
-	doc.Indent(4)
+	doc.Indent(2)
 	return doc.WriteTo(w)
 }
 
@@ -248,7 +249,7 @@ func DecodeXMLFromDocument(r io.Reader) (mthd *MThd, n int64, err error) {
 		return nil, n, newXMLDecodeError(doc, err)
 	}
 	root := doc.Root()
-	if root != nil {
+	if root == nil {
 		return nil, n, newXMLDecodeError(doc, errors.New("XML file contains no root tag"))
 	}
 	mthd, err = DecodeMThdFromXML(root)

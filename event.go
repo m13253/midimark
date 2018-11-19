@@ -387,7 +387,7 @@ func (ev *EventProgramChange) EncodeRealtime() ([]byte, error) {
 }
 
 func (ev *EventProgramChange) EncodeXML() *etree.Element {
-	el := etree.NewElement("NoteOff")
+	el := etree.NewElement("ProgramChange")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("program", fmt.Sprintf("%d", ev.Program))
 	return el
