@@ -187,7 +187,7 @@ func (ev *EventNoteOn) EncodeRealtime() ([]byte, error) {
 }
 
 func (ev *EventNoteOn) EncodeXML() *etree.Element {
-	el := etree.NewElement("NoteOn")
+	el := etree.NewElement("NoteOn ")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("key", ev.Key.String())
 	el.CreateAttr("velocity", fmt.Sprintf("%d", ev.Velocity))
