@@ -129,12 +129,10 @@ func (mtrk *MTrk) ConvertAbsTickToDuration(absTick uint64) time.Duration {
 	numerator := uint64(0)
 	denominator := mtrk.TempoTable.Division
 	usPerQuarter := uint32(500000)
-	i := 0
-	for i < len(mtrk.TempoTable.Changes) && absTick < mtrk.TempoTable.Changes[i].AbsTick {
+	for i := 0; i < len(mtrk.TempoTable.Changes) && absTick < mtrk.TempoTable.Changes[i].AbsTick; i++ {
 		numerator += (mtrk.TempoTable.Changes[i].AbsTick - lastChange) * uint64(usPerQuarter)
 		lastChange = mtrk.TempoTable.Changes[i].AbsTick
 		usPerQuarter = mtrk.TempoTable.Changes[i].UsPerQuarter
-		i++
 	}
 	if absTick < lastChange {
 		panic(fmt.Errorf("midimark: internal error: absTick - lastChange = %d - %d = %d", absTick, lastChange, absTick-lastChange))
