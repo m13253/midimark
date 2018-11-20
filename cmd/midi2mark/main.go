@@ -65,7 +65,7 @@ func main() {
 		}
 		defer output.Close()
 	}
-	sequence, err := midimark.DecodeMThdFromSMF(input, warningCallback)
+	sequence, err := midimark.DecodeSequenceFromSMF(input, warningCallback)
 	if err != nil {
 		log.Fatalln(err)
 	}

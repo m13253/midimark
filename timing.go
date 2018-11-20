@@ -34,15 +34,15 @@ import (
 var ErrEventsNotSorted = errors.New("mark2midi: can not convert absolute time to delta time: events not sorted in advance")
 var ErrDeltaToBig = errors.New("mark2midi: can not convert absolute time to delta time: value too big")
 
-func (mthd *MThd) ConvertDeltaToAbsTick() {
-	for _, mtrk := range mthd.Tracks {
+func (seq *Sequence) ConvertDeltaToAbsTick() {
+	for _, mtrk := range seq.Tracks {
 		mtrk.ConvertDeltaToAbsTick()
 	}
 }
 
-func (mthd *MThd) ConvertAbsToDeltaTick() error {
+func (seq *Sequence) ConvertAbsToDeltaTick() error {
 	var err error
-	for _, mtrk := range mthd.Tracks {
+	for _, mtrk := range seq.Tracks {
 		err = mtrk.ConvertAbsToDeltaTick()
 		if err != nil {
 			return err
@@ -51,13 +51,13 @@ func (mthd *MThd) ConvertAbsToDeltaTick() error {
 	return nil
 }
 
-func (mthd *MThd) CalculateTempoTable() {
+func (seq *Sequence) CalculateTempoTable() {
 	var table *TempoTable
-	for i, mtrk := range mthd.Tracks {
-		if i == 0 || mthd.Format == 2 {
+	for i, mtrk := range seq.Tracks {
+		if i == 0 || seq.Header.Format == 2 {
 			table = &TempoTable{
-				Framerate: mthd.Framerate,
-				Division:  mthd.Division,
+				Framerate: seq.Header.Framerate,
+				Division:  seq.Header.Division,
 			}
 		}
 		absTick := uint64(0)
@@ -81,7 +81,7 @@ func (mthd *MThd) CalculateTempoTable() {
 		}
 		mtrk.TempoTable = table
 	}
-	if table != nil && mthd.Format != 2 {
+	if table != nil && seq.Header.Format != 2 {
 		sort.Slice(table.Changes, func(i, j int) bool {
 			return table.Changes[i].AbsTick < table.Changes[j].AbsTick || (table.Changes[i].AbsTick == table.Changes[j].AbsTick && table.Changes[i].FilePosition < table.Changes[j].FilePosition)
 		})

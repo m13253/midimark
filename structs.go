@@ -46,6 +46,12 @@ type MetaEvent interface {
 	MetaType() uint8
 }
 
+type Sequence struct {
+	Header    *MThd
+	Tracks    []*MTrk
+	Undecoded []byte
+}
+
 type MThd struct {
 	FilePosition int64
 	Format       uint16
@@ -53,7 +59,6 @@ type MThd struct {
 	Framerate    uint8
 	Division     uint16
 	Undecoded    []byte
-	Tracks       []*MTrk
 }
 
 type MTrk struct {

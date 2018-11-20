@@ -39,11 +39,6 @@ func (mthd *MThd) EncodeSMF(w io.Writer) error {
 	if len(mthd.Undecoded) > 0xffffffff-6 {
 		return newSMFEncodeError(mthd, errors.New("MThd chunk is too large"))
 	}
-	if len(mthd.Tracks) < 0xffff {
-		mthd.NTrks = uint16(len(mthd.Tracks))
-	} else {
-		mthd.NTrks = 0xffff
-	}
 	if mthd.Framerate == 0 {
 		if mthd.Division >= 0x8000 {
 			return newSMFEncodeError(mthd, fmt.Errorf("invalid division %d", mthd.Division))
@@ -67,16 +62,7 @@ func (mthd *MThd) EncodeSMF(w io.Writer) error {
 		return err
 	}
 	_, err = w.Write(mthd.Undecoded)
-	if err != nil {
-		return err
-	}
-	for _, mtrk := range mthd.Tracks {
-		err = mtrk.EncodeSMF(w)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return err
 }
 
 func (mthd *MThd) EncodeXML() *etree.Element {
@@ -86,18 +72,7 @@ func (mthd *MThd) EncodeXML() *etree.Element {
 	el.CreateAttr("ntrks", fmt.Sprintf("%d", mthd.NTrks))
 	el.CreateAttr("framerate", fmt.Sprintf("%d", mthd.Framerate))
 	el.CreateAttr("division", fmt.Sprintf("%d", mthd.Division))
-	for _, mtrk := range mthd.Tracks {
-		el.AddChild(mtrk.EncodeXML())
-	}
 	return el
-}
-
-func (mthd *MThd) EncodeXMLToDocument(w io.Writer) (n int64, err error) {
-	doc := etree.NewDocument()
-	el := mthd.EncodeXML()
-	doc.AddChild(el)
-	doc.Indent(2)
-	return doc.WriteTo(w)
 }
 
 func DecodeMThdFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mthd *MThd, err error) {
@@ -147,13 +122,12 @@ func DecodeMThdFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mthd *
 		NTrks:        binary.BigEndian.Uint16(buf[10:12]),
 		Framerate:    framerate,
 		Division:     division,
-		Tracks:       make([]*MTrk, 0),
 	}
 
 	// Strangely there are wild MIDI files with MThd length == 0
 	if length < 6 {
 		warningCallback(newSMFDecodeError(pos+4, fmt.Errorf("invalid MThd chunk length %d", length)))
-		pos, err = r.Seek(int64(length)-6, io.SeekCurrent)
+		_, err = r.Seek(int64(length)-6, io.SeekCurrent)
 		if err != nil {
 			return
 		}
@@ -163,28 +137,6 @@ func DecodeMThdFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (mthd *
 		n, err = io.ReadFull(r, mthd.Undecoded)
 		mthd.Undecoded = mthd.Undecoded[:n]
 		if err != nil {
-			return
-		}
-	}
-
-	if mthd.NTrks == 0 {
-		warningCallback(newSMFDecodeError(pos+10, errors.New("MIDI file seems to contain no tracks")))
-	}
-
-	for i := uint16(0); mthd.NTrks == 0 || i < mthd.NTrks; i++ {
-		var mtrk *MTrk
-		mtrk, err = DecodeMTrkFromSMF(r, warningCallback)
-		if mtrk != nil {
-			mthd.Tracks = append(mthd.Tracks, mtrk)
-		}
-		if err != nil {
-			if err == io.EOF {
-				if mthd.NTrks != 0 {
-					err = io.ErrUnexpectedEOF
-				} else {
-					err = nil
-				}
-			}
 			return
 		}
 	}
@@ -220,16 +172,6 @@ func DecodeMThdFromXML(el *etree.Element) (*MThd, error) {
 	if err != nil {
 		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for MThd tag: undecoded=%q", el.SelectAttrValue("undecoded", "")))
 	}
-	tracks := make([]*MTrk, 0)
-	for _, child := range el.Child {
-		if childEl, ok := child.(*etree.Element); ok {
-			mtrk, err := DecodeMTrkFromXML(childEl)
-			if err != nil {
-				return nil, err
-			}
-			tracks = append(tracks, mtrk)
-		}
-	}
 	return &MThd{
 		FilePosition: pos,
 		Format:       uint16(format),
@@ -237,21 +179,5 @@ func DecodeMThdFromXML(el *etree.Element) (*MThd, error) {
 		Framerate:    uint8(framerate),
 		Division:     uint16(division),
 		Undecoded:    undecoded,
-		Tracks:       tracks,
 	}, nil
-}
-
-func DecodeXMLFromDocument(r io.Reader) (mthd *MThd, n int64, err error) {
-	doc := etree.NewDocument()
-	doc.ReadSettings.Permissive = true
-	n, err = doc.ReadFrom(r)
-	if err != nil {
-		return nil, n, newXMLDecodeError(doc, err)
-	}
-	root := doc.Root()
-	if root == nil {
-		return nil, n, newXMLDecodeError(doc, errors.New("XML file contains no root tag"))
-	}
-	mthd, err = DecodeMThdFromXML(root)
-	return
 }

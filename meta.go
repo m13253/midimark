@@ -919,7 +919,7 @@ func decodeMetaEvent(raw *MetaEventUnknown, warningCallback WarningCallback) Eve
 			Text:        string(raw.Unknown),
 		}
 	case 0x03:
-		return &MetaEventInstrumentName{
+		return &MetaEventSequenceTrackName{
 			EventCommon: raw.EventCommon,
 			Text:        string(raw.Unknown),
 		}
