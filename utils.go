@@ -44,6 +44,15 @@ func tell(r io.ReadSeeker) int64 {
 	return pos
 }
 
+func dumpText(text string) string {
+	text = strconv.Quote(text)
+	return strings.Replace(text[1:len(text)-1], `\"`, `"`, -1)
+}
+
+func parseTextDump(textdump string) (string, error) {
+	return strconv.Unquote(`"` + strings.Replace(textdump, `"`, `\"`, -1) + `"`)
+}
+
 func parseHexDump(hexdump string) ([]byte, error) {
 	fields := strings.Fields(hexdump)
 	data := make([]byte, len(fields))

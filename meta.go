@@ -105,7 +105,7 @@ func (ev *MetaEventTextEvent) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -145,7 +145,7 @@ func (ev *MetaEventCopyrightNotice) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -185,7 +185,7 @@ func (ev *MetaEventSequenceTrackName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -225,7 +225,7 @@ func (ev *MetaEventInstrumentName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -265,7 +265,7 @@ func (ev *MetaEventLyric) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -305,7 +305,7 @@ func (ev *MetaEventMarker) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -345,7 +345,7 @@ func (ev *MetaEventCuePoint) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -385,7 +385,7 @@ func (ev *MetaEventProgramName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -425,7 +425,7 @@ func (ev *MetaEventDeviceName) EncodeXML() *etree.Element {
 	el := etree.NewElement("Meta")
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
-	el.CreateAttr("text", ev.Text)
+	el.CreateAttr("text", dumpText(ev.Text))
 	return el
 }
 
@@ -682,7 +682,7 @@ func (ev *MetaEventTimeSignature) EncodeXML() *etree.Element {
 	ev.encodeCommonXMLAttr(el)
 	el.CreateAttr("type", fmt.Sprintf("%#02x", ev.MetaType()))
 	el.CreateAttr("numerator", fmt.Sprintf("%d", ev.Numerator))
-	el.CreateAttr("denominator", fmt.Sprintf("%d", ev.Numerator))
+	el.CreateAttr("denominator", fmt.Sprintf("%d", ev.Denominator))
 	el.CreateAttr("midi-clocks-per-metronome", fmt.Sprintf("%d", ev.MIDIClocksPerMetronome))
 	el.CreateAttr("thirty-second-notes-per-24-midi-clocks", fmt.Sprintf("%d", ev.ThirtySecondNotesPer24MIDIClocks))
 	if len(ev.Undecoded) != 0 {
@@ -1068,55 +1068,82 @@ func decodeMetaEventFromXML(el *etree.Element, eventCommon EventCommon) (Event, 
 			Undecoded:      undecoded,
 		}, nil
 	case 0x01:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventTextEvent{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x02:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventCopyrightNotice{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x03:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventSequenceTrackName{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x04:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventInstrumentName{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x05:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventLyric{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x06:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventMarker{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x07:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventCuePoint{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x08:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventProgramName{
 			EventCommon: eventCommon,
 			Text:        text,
 		}, nil
 	case 0x09:
-		text := el.SelectAttrValue("text", "")
+		text, err := parseTextDump(el.SelectAttrValue("text", ""))
+		if err != nil {
+			return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for meta type %#02x: text=%q", metaType, el.SelectAttrValue("text", "")))
+		}
 		return &MetaEventDeviceName{
 			EventCommon: eventCommon,
 			Text:        text,
