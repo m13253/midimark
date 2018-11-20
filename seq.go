@@ -85,6 +85,10 @@ func DecodeSequenceFromSMF(r io.ReadSeeker, warningCallback WarningCallback) (se
 		Header: mthd,
 		Tracks: make([]*MTrk, 0),
 	}
+	defer func() {
+		seq.CalculateNotePair()
+		seq.CalculateTempoTable()
+	}()
 
 	pos := tell(r)
 	if mthd.NTrks == 0 {
@@ -148,6 +152,8 @@ func DecodeSequenceFromXML(el *etree.Element) (*Sequence, error) {
 	if seq.Header == nil {
 		return nil, newXMLDecodeError(el, errors.New("can not find a MThd tag"))
 	}
+	seq.CalculateNotePair()
+	seq.CalculateTempoTable()
 	return seq, nil
 }
 
