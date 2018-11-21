@@ -90,36 +90,36 @@ func (seq *Sequence) CalculateTempoTable() {
 func (seq *Sequence) CalculateNotePair() {
 	if seq.Header.Format == 2 {
 		for _, mtrk := range seq.Tracks {
-			var noteOn [128][]*EventNoteOn
+			var noteOn [16][128][]*EventNoteOn
 			for _, event := range mtrk.Events {
 				switch ev := event.(type) {
 				case *EventNoteOff:
-					if ev.Key >= 0x80 || len(noteOn[ev.Key]) == 0 {
+					if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
 						ev.RelatedNoteOn = nil
 						break
 					}
-					ev.RelatedNoteOn = noteOn[ev.Key][0]
-					noteOn[ev.Key][0].RelatedNoteOff = ev
-					copy(noteOn[ev.Key], noteOn[ev.Key][1:])
-					noteOn[ev.Key] = noteOn[ev.Key][:len(noteOn[ev.Key])-1]
+					ev.RelatedNoteOn = noteOn[ev.Channel-1][ev.Key][0]
+					noteOn[ev.Channel-1][ev.Key][0].RelatedNoteOff = ev
+					copy(noteOn[ev.Channel-1][ev.Key][:], noteOn[ev.Channel-1][ev.Key][1:])
+					noteOn[ev.Channel-1][ev.Key] = noteOn[ev.Channel-1][ev.Key][:len(noteOn[ev.Channel-1][ev.Key])-1]
 				case *EventNoteOn:
 					ev.RelatedNoteOff = nil
-					if ev.Key >= 0x80 || len(noteOn[ev.Key]) == 0 {
+					if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
 						break
 					}
-					noteOn[ev.Key] = append(noteOn[ev.Key], ev)
+					noteOn[ev.Channel-1][ev.Key] = append(noteOn[ev.Channel-1][ev.Key], ev)
 				case *EventPolyphonicKeyPressure:
-					if ev.Key >= 0x80 || len(noteOn[ev.Key]) == 0 {
+					if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
 						ev.RelatedNoteOn = nil
 						break
 					}
-					ev.RelatedNoteOn = make([]*EventNoteOn, len(noteOn[ev.Key]))
-					copy(ev.RelatedNoteOn, noteOn[ev.Key])
+					ev.RelatedNoteOn = make([]*EventNoteOn, len(noteOn[ev.Channel-1][ev.Key]))
+					copy(ev.RelatedNoteOn, noteOn[ev.Channel-1][ev.Key])
 				}
 			}
 		}
 	} else {
-		var noteOn [128][]*EventNoteOn
+		var noteOn [16][128][]*EventNoteOn
 		i := make([]int, len(seq.Tracks))
 		absTick := make([]uint64, len(seq.Tracks))
 		for {
@@ -141,27 +141,27 @@ func (seq *Sequence) CalculateNotePair() {
 
 			switch ev := selectedEvent.(type) {
 			case *EventNoteOff:
-				if ev.Key >= 0x80 || len(noteOn[ev.Key]) == 0 {
+				if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
 					ev.RelatedNoteOn = nil
 					break
 				}
-				ev.RelatedNoteOn = noteOn[ev.Key][0]
-				noteOn[ev.Key][0].RelatedNoteOff = ev
-				copy(noteOn[ev.Key], noteOn[ev.Key][1:])
-				noteOn[ev.Key] = noteOn[ev.Key][:len(noteOn[ev.Key])-1]
+				ev.RelatedNoteOn = noteOn[ev.Channel-1][ev.Key][0]
+				noteOn[ev.Channel-1][ev.Key][0].RelatedNoteOff = ev
+				copy(noteOn[ev.Channel-1][ev.Key][:], noteOn[ev.Channel-1][ev.Key][1:])
+				noteOn[ev.Channel-1][ev.Key] = noteOn[ev.Channel-1][ev.Key][:len(noteOn[ev.Channel-1][ev.Key])-1]
 			case *EventNoteOn:
 				ev.RelatedNoteOff = nil
-				if ev.Key >= 0x80 || len(noteOn[ev.Key]) == 0 {
+				if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
 					break
 				}
-				noteOn[ev.Key] = append(noteOn[ev.Key], ev)
+				noteOn[ev.Channel-1][ev.Key] = append(noteOn[ev.Channel-1][ev.Key], ev)
 			case *EventPolyphonicKeyPressure:
-				if ev.Key >= 0x80 || len(noteOn[ev.Key]) == 0 {
+				if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
 					ev.RelatedNoteOn = nil
 					break
 				}
-				ev.RelatedNoteOn = make([]*EventNoteOn, len(noteOn[ev.Key]))
-				copy(ev.RelatedNoteOn, noteOn[ev.Key])
+				ev.RelatedNoteOn = make([]*EventNoteOn, len(noteOn[ev.Channel-1][ev.Key]))
+				copy(ev.RelatedNoteOn, noteOn[ev.Channel-1][ev.Key])
 			}
 		}
 	}
