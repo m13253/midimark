@@ -151,7 +151,7 @@ func (seq *Sequence) CalculateNotePair() {
 				noteOn[ev.Channel-1][ev.Key] = noteOn[ev.Channel-1][ev.Key][:len(noteOn[ev.Channel-1][ev.Key])-1]
 			case *EventNoteOn:
 				ev.RelatedNoteOff = nil
-				if ev.Channel-1 >= 16 || ev.Key >= 0x80 || len(noteOn[ev.Channel-1][ev.Key]) == 0 {
+				if ev.Channel-1 >= 16 || ev.Key >= 0x80 {
 					break
 				}
 				noteOn[ev.Channel-1][ev.Key] = append(noteOn[ev.Channel-1][ev.Key], ev)
@@ -213,7 +213,7 @@ func (mtrk *MTrk) ConvertAbsTickToDuration(absTick int64) time.Duration {
 		if mtrk.TempoTable.Changes[0].AbsTick < lastChange {
 			lastChange = mtrk.TempoTable.Changes[0].AbsTick
 		}
-		for i := 0; i < len(mtrk.TempoTable.Changes) && absTick < mtrk.TempoTable.Changes[i].AbsTick; i++ {
+		for i := 0; i < len(mtrk.TempoTable.Changes) && mtrk.TempoTable.Changes[i].AbsTick <= absTick; i++ {
 			numerator += (mtrk.TempoTable.Changes[i].AbsTick - lastChange) * int64(usPerQuarter)
 			lastChange = mtrk.TempoTable.Changes[i].AbsTick
 			usPerQuarter = mtrk.TempoTable.Changes[i].UsPerQuarter
