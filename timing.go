@@ -189,6 +189,7 @@ func (mtrk *MTrk) ConvertAbsToDeltaTick() error {
 			return ErrDeltaToBig
 		}
 		evCommon.DeltaTick = VLQ(delta)
+		absTick = evCommon.AbsTick
 	}
 	return nil
 }
