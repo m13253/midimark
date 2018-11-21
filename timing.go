@@ -26,7 +26,6 @@ package midimark
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 )
@@ -60,9 +59,9 @@ func (seq *Sequence) CalculateTempoTable() {
 				Division:  seq.Header.Division,
 			}
 		}
-		absTick := uint64(0)
+		absTick := int64(0)
 		for _, event := range mtrk.Events {
-			absTick += uint64(event.Common().DeltaTick)
+			absTick += int64(event.Common().DeltaTick)
 			if tempoChange, ok := event.(*MetaEventSetTempo); ok {
 				if len(table.Changes) == 0 || table.Changes[len(table.Changes)-1].AbsTick != absTick {
 					table.Changes = append(table.Changes, TempoChange{
@@ -169,17 +168,17 @@ func (seq *Sequence) CalculateNotePair() {
 }
 
 func (mtrk *MTrk) ConvertDeltaToAbsTick() {
-	absTick := uint64(0)
+	absTick := int64(0)
 	for _, event := range mtrk.Events {
 		evCommon := event.Common()
 		delta := evCommon.DeltaTick
-		absTick += uint64(delta)
+		absTick += int64(delta)
 		evCommon.AbsTick = absTick
 	}
 }
 
 func (mtrk *MTrk) ConvertAbsToDeltaTick() error {
-	absTick := uint64(0)
+	absTick := int64(0)
 	for _, event := range mtrk.Events {
 		evCommon := event.Common()
 		if evCommon.AbsTick < absTick {
@@ -194,7 +193,7 @@ func (mtrk *MTrk) ConvertAbsToDeltaTick() error {
 	return nil
 }
 
-func (mtrk *MTrk) ConvertAbsTickToDuration(absTick uint64) time.Duration {
+func (mtrk *MTrk) ConvertAbsTickToDuration(absTick int64) time.Duration {
 	if mtrk.TempoTable == nil {
 		panic(errors.New("midimark: track does not contain a tempo table"))
 	}
@@ -205,18 +204,20 @@ func (mtrk *MTrk) ConvertAbsTickToDuration(absTick uint64) time.Duration {
 			return time.Duration(absTick) * time.Second / (time.Duration(mtrk.TempoTable.Division) * time.Duration(mtrk.TempoTable.Framerate))
 		}
 	}
-	lastChange := uint64(0)
-	numerator := uint64(0)
+	lastChange := int64(0)
+	numerator := int64(0)
 	denominator := mtrk.TempoTable.Division
 	usPerQuarter := uint32(500000)
-	for i := 0; i < len(mtrk.TempoTable.Changes) && absTick < mtrk.TempoTable.Changes[i].AbsTick; i++ {
-		numerator += (mtrk.TempoTable.Changes[i].AbsTick - lastChange) * uint64(usPerQuarter)
-		lastChange = mtrk.TempoTable.Changes[i].AbsTick
-		usPerQuarter = mtrk.TempoTable.Changes[i].UsPerQuarter
+	if len(mtrk.TempoTable.Changes) != 0 {
+		if mtrk.TempoTable.Changes[0].AbsTick < lastChange {
+			lastChange = mtrk.TempoTable.Changes[0].AbsTick
+		}
+		for i := 0; i < len(mtrk.TempoTable.Changes) && absTick < mtrk.TempoTable.Changes[i].AbsTick; i++ {
+			numerator += (mtrk.TempoTable.Changes[i].AbsTick - lastChange) * int64(usPerQuarter)
+			lastChange = mtrk.TempoTable.Changes[i].AbsTick
+			usPerQuarter = mtrk.TempoTable.Changes[i].UsPerQuarter
+		}
 	}
-	if absTick < lastChange {
-		panic(fmt.Errorf("midimark: internal error: absTick - lastChange = %d - %d = %d", absTick, lastChange, absTick-lastChange))
-	}
-	numerator += (absTick - lastChange) * uint64(usPerQuarter)
+	numerator += (absTick - lastChange) * int64(usPerQuarter)
 	return time.Duration(numerator) * time.Microsecond / time.Duration(denominator)
 }

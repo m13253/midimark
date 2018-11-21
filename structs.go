@@ -69,7 +69,7 @@ type MTrk struct {
 
 type EventCommon struct {
 	FilePosition int64
-	AbsTick      uint64
+	AbsTick      int64
 	DeltaTick    VLQ
 	Channel      uint8
 }
@@ -327,7 +327,7 @@ type TempoTable struct {
 }
 
 type TempoChange struct {
-	AbsTick      uint64
+	AbsTick      int64
 	FilePosition int64
 	UsPerQuarter uint32
 }

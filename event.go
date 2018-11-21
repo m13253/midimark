@@ -1607,7 +1607,7 @@ func DecodeEventFromXML(el *etree.Element) (Event, error) {
 	if err != nil {
 		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: pos=%q", el.SelectAttrValue("pos", "")))
 	}
-	tick, err := strconv.ParseUint(el.SelectAttrValue("tick", "0"), 0, 64)
+	tick, err := strconv.ParseInt(el.SelectAttrValue("tick", "0"), 0, 64)
 	if err != nil {
 		return nil, newXMLDecodeError(el, fmt.Errorf("invalid attribute for event tag: tick=%q", el.SelectAttrValue("tick", "")))
 	}
