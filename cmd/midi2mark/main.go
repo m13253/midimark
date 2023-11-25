@@ -29,7 +29,7 @@ import (
 	"log"
 	"os"
 
-	midimark "../.."
+	"github.com/m13253/midimark"
 )
 
 func warningCallback(err error) {

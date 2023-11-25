@@ -162,11 +162,11 @@ func DecodeXMLFromDocument(r io.Reader) (seq *Sequence, n int64, err error) {
 	doc.ReadSettings.Permissive = true
 	n, err = doc.ReadFrom(r)
 	if err != nil {
-		return nil, n, newXMLDecodeError(doc, err)
+		return nil, n, newXMLDecodeError(&doc.Element, err)
 	}
 	root := doc.Root()
 	if root == nil {
-		return nil, n, newXMLDecodeError(doc, errors.New("XML file contains no root tag"))
+		return nil, n, newXMLDecodeError(&doc.Element, errors.New("XML file contains no root tag"))
 	}
 	seq, err = DecodeSequenceFromXML(root)
 	return
