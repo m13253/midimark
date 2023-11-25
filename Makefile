@@ -6,7 +6,7 @@ clean:
 	rm -f midi2mark mark2midi
 
 dep:
-	go get -u -d -v github.com/beevik/etree
+	go get -u -d -v
 
 midi2mark: dep
 	go build ./cmd/midi2mark
